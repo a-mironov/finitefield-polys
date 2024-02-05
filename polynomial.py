@@ -1,7 +1,9 @@
 # polynomial module
 
 # contains logic for polynomial management
-# (creation, replacement, deletion, display)
+# (creation, replacement, deletion, display, copy, rename)
+# as well as the polynomial class
+# incl. operator definitions
 
 from math import sqrt, floor
 from enum import Flag, auto
@@ -10,7 +12,6 @@ from enum import Flag, auto
 FCH = 7
 # polynomial dictionary
 poly_dict = {}
-# inverse lookup
 
 # WIP!!
 class DisplayFlag(Flag):
@@ -23,7 +24,7 @@ class DisplayFlag(Flag):
 # polynomials stored as lists of coefficients
 # in ascending order, so p.coeffs[i] == x^i coefficient
 class Poly():
-    def __init__(self, cfs: list):
+    def __init__(self, cfs: list=[0]):
         self.coeffs = cfs
         # empty list => zero polynomial
         if len(self.coeffs) == 0:
@@ -67,6 +68,21 @@ class Poly():
             zeroidx -= 1
         del self.coeffs[zeroidx+1:]
 
+    def degree(self):
+        # zero polynomial is defined with degree -1
+        if len(self.coeffs) == 0 and self.coeffs[0] == 0:
+            return -1
+        return len(self.coeffs) - 1
+
+    def scale(self, scalar: int):
+        """
+        multiplies all coeffs in a polynomial by a scalar
+        """
+        result = Poly([0])
+        result.coeffs = list(map(lambda n: scalar * n, self.coeffs))
+        result.normalize()
+        return result
+
     def __add__(self, other):
         """
         adds two polynomials
@@ -103,17 +119,34 @@ class Poly():
         """
         total = Poly([0])
         # polynomial degrees; assumes normalized
-        m = len(self.coeffs) - 1
-        n = len(other.coeffs) - 1
+        m = self.degree()
+        n = other.degree()
         total.coeffs = [0]*(m+n+1)
         # naive convolution
-        for k in range(m+n+1):
-            for i in range(k+1):
-                j = k - i
-                if i <= m and j <= n:
-                    total.coeffs[k] += (self.coeffs[i]*other.coeffs[j]) % FCH
+        for i in range(m+1):
+            for j in range(n+1):
+                total.coeffs[i+j] += (self.coeffs[i]*other.coeffs[j]) % FCH
+
         total.normalize()
         return total
+
+    def __pow__(self, exponent: int):
+        """
+        raises the polynomial to a power. must be integer and >= 0.
+        implemented by repeated squaring.
+        """
+        if exponent < 0:
+            raise ValueError(f"Cannot raise a polynomial to power {exponent}.")
+        elif exponent == 0:
+            return Poly([1]) # p^0 = 1
+        elif exponent == 1:
+            return self
+        else:
+            temp = self ** (exponent // 2)
+            if exponent % 2 == 0:
+                return temp * temp
+            else:
+                return temp * temp * self
 
 def is_prime(n: int):
     """
@@ -215,78 +248,38 @@ def update_poly(name: str, coefficients: list):
     del_poly(name)
     make_poly(name, coefficients)
 
-
-def addmake_poly(name1: str, name2: str, result: str):
+def copy_poly(source: str, dest: str):
     """
-    pulls two polynomials from poly_dict, adds them, and stores the result
-    name1 and name2 must exist, while result must NOT exist
+    copies a polynomial
 
-    name1: str -- name of the first polynomial to be summed
-    name2: str -- name of the second polynomial to be summed
-    result: str -- name under which to store the result
+    source: str -- name of the source polynomial
+    dest: str -- name of the destination
     """
-    # read polynomials from dict
     try:
-        addend1 = poly_dict[name1]
-        addend2 = poly_dict[name2]
+        poly = poly_dict[source]
     except KeyError as e:
-        raise e
-    # ensure name `result` does not exist
-    if result in poly_dict.keys():
-        raise ValueError(f"Cannot store addition result -- name {result}"+
-                         "already in use.")
-    # now we have our polys and can add them
-    total = addend1 + addend2
-    # not calling make_poly b/c the polynomial object is already there
-    poly_dict[result] = total
+        raise KeyError(source)
 
-def submake_poly(name1: str, name2: str, result: str):
-    """
-    pulls two polynomials from poly_dict, subtracts them, and stores the result
-    name1 and name2 must exist, while result must NOT exist
+    if dest in poly_dict.keys():
+        update_poly(dest, poly.coeffs)
+    else:
+        make_poly(dest, poly.coeffs)
 
-    name1: str -- name of the first polynomial to be summed
-    name2: str -- name of the second polynomial to be summed
-    result: str -- name under which to store the result
+def rename_poly(oldname: str, newname: str):
     """
-    # read polynomials from dict
+    renames a polynomial
+    """
     try:
-        addend1 = poly_dict[name1]
-        addend2 = poly_dict[name2]
-    except KeyError as e:
-        raise e
-    # ensure name `result` does not exist
-    if result in poly_dict.keys():
-        raise ValueError(f"Cannot store subtraction result -- name {result}"+
-                         "already in use.")
-    # now we have our polys and can subtract them
-    total = addend1 - addend2
-    # not calling make_poly b/c the polynomial object is already there
-    poly_dict[result] = total
+        poly = poly_dict[oldname]
+    except KeyError:
+        raise KeyError(oldname)
 
-def mulmake_poly(name1: str, name2: str, result: str):
-    """
-    pulls two polynomials from poly_dict, multiplies them, and stores the result
-    name1 and name2 must exist, while result must NOT exist
+    if newname in poly_dict.keys():
+        raise ValueError(f"Polynomial by name {newname} already exists.")
 
-    name1: str -- name of the first polynomial to be summed
-    name2: str -- name of the second polynomial to be summed
-    result: str -- name under which to store the result
-    """
-    # read polynomials from dict
-    try:
-        addend1 = poly_dict[name1]
-        addend2 = poly_dict[name2]
-    except KeyError as e:
-        raise e
-    # ensure name `result` does not exist
-    if result in poly_dict.keys():
-        raise ValueError(f"Cannot store addition result -- name {result}"+
-                         "already in use.")
-    # now we have our polys and can add them
-    total = addend1 * addend2
-    # not calling make_poly b/c the polynomial object is already there
-    poly_dict[result] = total
+    poly_dict[newname] = poly
+    poly_dict.pop(oldname)
+    
 
 def set_characteristic(new_char: int):
     """
