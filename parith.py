@@ -76,24 +76,7 @@ def mulmake_poly(name1: str, name2: str, result: str):
     total = addend1 * addend2
     # not calling make_poly b/c the polynomial object is already there
     polynomial.poly_dict[result] = total
-
-
-def lincomb(weights: list, polys: list):
-    """
-    linear combination: computes the sum
-    weights[0] * polys[0] + weights[1] * polys[1] + ...
-
-    weights - list: list of weights
-    polys - list: list of polynomials
-    """
-    if len(weights) != len(polys):
-        raise ValueError("Bad linear combination -- weight and polynomial count don't match.")
-    # if we are here, len(weights) == len(polys)
-    # initialize sum to 0
-    total = polynomial.Poly([0])
-    for i in range(len(weights)):
-        total = total + polys[i].scale(weights[i])
-    return total
+    
     
 def powmake_poly(basename: str, exponent: int, result: str):
     """
@@ -160,8 +143,8 @@ def eucdivmake_poly(divname: str, divisorname: str, quotname: str, remname: str)
     # ensure quotname and remname don't exist
     for key in [quotname, remname]:
         if key in polynomial.poly_dict.keys():
-            raise ValueError(f"Cannot store division result -- name '{result}' "+
-                         "already in use.")
+            raise ValueError("Cannot store division result -- "+
+                             f"name '{result}' already in use.")
     # now we can do the division
     try:
         quotient, remainder = eucdiv(dividend, divisor)
@@ -169,3 +152,31 @@ def eucdivmake_poly(divname: str, divisorname: str, quotname: str, remname: str)
         raise ZeroDivisionError
     polynomial.poly_dict[quotname] = quotient
     polynomial.poly_dict[remname] = remainder
+
+def modmake_poly(divname: str, modname: str, result: str):
+    """
+    Reduces polynomial `divname` modulo polynomial `modname`
+    and stores the result in `result`.
+
+    divname: str -- name of the divisor
+    modname: str -- name of the modulus
+    result: str -- name of the result
+    """
+    # read polynomials
+    try:
+        dividend = polynomial.poly_dict[divname]
+        modulus = polynomial.poly_dict[modname]
+    except KeyError as e:
+        raise e
+    # ensure result doesn't exist
+    if result in polynomial.poly_dict.keys():
+        raise ValueError("Cannot store modular reduction result -- "+
+                         f"name '{result}' already in use.")
+    try:
+        remainder = dividend % modulus
+    except ZeroDivisionError as e:
+        raise e
+    except ArithmeticError as e:
+        raise e
+
+    polynomial.poly_dict[result] = remainder

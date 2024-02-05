@@ -148,6 +148,53 @@ class Poly():
             else:
                 return temp * temp * self
 
+    def peval(self, x: int):
+        """
+        Evaluates the polynomial at a point, using the Horner method.
+        """
+        # special case: polynomial is constant or needs to be eval'd at 0
+        if self.degree() <= 0 or x == 0:
+            return self.coeffs[0]
+        
+        result = 0
+        power = 1 # holds x^n mod FCH
+        for i in range(self.degree()+1):
+            result = (result + power * self.coeffs[i]) % FCH
+            power = (power * x) % FCH
+
+        return result
+
+    def __mod__(self, other):
+        """
+        Computes self % other as follows:
+        1. Create list of polynomials equivalent to x^i mod other,
+           for i from 0 up to self.degree().
+        2. Take the linear combination of those, with the
+           coefficients of self as weights.
+        """
+        if other.degree() == -1:
+            raise ZeroDivisionError
+        if other.degree() == 0:
+            raise ArithmeticError("Cannot reduce modulo a constant polynomial!")
+        if other.degree() == 1:
+            point = -other.coeffs[0] * pow(other.coeffs[1], -1, FCH)
+            return Poly([self.peval(point)])
+        # make `other` monic by dividing out by its leading coefficient
+        other_monic = other.scale(pow(other.coeffs[-1], -1, FCH))
+        powers_mod_other = [Poly([0])] * len(self.coeffs)
+        powers_mod_other[0] = Poly([1])
+        for i in range(1,len(self.coeffs)):
+            # multiply by x
+            poly = powers_mod_other[i-1] * Poly([0,1])
+            # reduce mod other
+            # under normal circumstances, this >= should only ever be ==...
+            if poly.degree() >= other.degree():
+                coeff = poly.coeffs[-1]
+                poly = poly - other.scale(coeff)
+            powers_mod_other[i] = poly
+        return lincomb(self.coeffs, powers_mod_other)
+                
+
 def is_prime(n: int):
     """
     Checks if its input is prime. Auxiliary.
@@ -303,3 +350,20 @@ def set_characteristic(new_char: int):
         FCH = new_char
         # flushing the polynomials
         poly_dict.clear()
+
+def lincomb(weights: list, polys: list):
+    """
+    linear combination: computes the sum
+    weights[0] * polys[0] + weights[1] * polys[1] + ...
+
+    weights - list: list of weights
+    polys - list: list of polynomials
+    """
+    if len(weights) != len(polys):
+        raise ValueError("Bad linear combination -- weight and polynomial count don't match.")
+    # if we are here, len(weights) == len(polys)
+    # initialize sum to 0
+    total = Poly([0])
+    for i in range(len(weights)):
+        total = total + polys[i].scale(weights[i])
+    return total
