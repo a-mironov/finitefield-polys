@@ -36,6 +36,27 @@ cmds_list["setchar"] = ("Usage: setchar <number> [CONFIRM]\n\n"+
                         "this command bypasses the warning.")
 cmds_list["char"] = ("Usage: char\n\n"+
                      "Displays the current characteristic of the base field.")
+cmds_list["displayopts"] = ("Usage: displayopts OR displayopts <option> OR "+
+                            "displayopts <option> toggle\n\n"+
+                            "With no input, displays all current display "+
+                            "options.\nWith only <option> as input, "+
+                            "displays the state of that option.\nWith "+
+                            "`<option> toggle` as input, toggles that option "+
+                            "and reports its new value.\n\n"+
+                            "Currently available options:\n"+
+                            "deg -- Term order (ascending or descending "+
+                            "by degree)\n"+
+                            "bal -- Coefficient display mode "+
+                            "(balanced or unbalanced)\n"+
+                            "\nN.B.:\n\n"+
+                            "* `bal` option is IGNORED "+
+                            "in characteristic 2.\n"+
+                            "* `deg` option does NOT affect inputs for the "+
+                            "`create` and `update` commands -- these always "+
+                            "read coefficients in ascending order."
+                            "\n\nAlias: dpo")
+cmds_list["dpo"] = ("Alias for `displayoptions`.")
+aliases.append("dpo")
 # data management commands
 cmds_list["create"] = ("Usage: create <name> <coeffs>\n\n"+
                        "Creates a polynomial by name `name` with "+
@@ -47,7 +68,10 @@ cmds_list["show"] = ("Usage: show <name>\n\n"+
 cmds_list["showall"] = ("Usage: showall\n\n"+
                         "Displays all currently stored polynomials on the screen.")
 cmds_list["delete"] = ("Usage: delete <name>\n\n"+
-                       "Deletes the polynomial by name `name`.")
+                       "Deletes the polynomial by name `name`.\n\n"+
+                       "Alias: del")
+cmds_list["del"] = ("Alias for `delete`.")
+aliases.append("del")
 cmds_list["deleteall"] = ("Usage: deleteall CONFIRM\n\n"+
                           "If the first argument is 'CONFIRM', in all caps, "+
                           "without quotes: deletes all stored polynomials. "+
@@ -121,7 +145,7 @@ cmds_list["eea"] = ("Usage: eea <poly1> <poly2> <gcd> <coe1> <coe2>\n\n"+
                     "and the coefficients under names `coe1` and `coe2`. "+
                     "All three output names must not exist.")
 
-help_pages = [["exit","help","list","setchar","char"],
+help_pages = [["exit","help","list","setchar","char","displayopts"],
               ["create","show","showall","delete","update","copy","rename"],
               ["add","subtract","multiply","lincomb",
                "power","eval","modulo","eucdiv","eea"]]
@@ -243,6 +267,37 @@ stored polynomials! Repeat the command to confirm.""")
                     print(f"<{command}>")
                 else:
                     print(command)
+        case "displayopts" | "dpo":
+            # no args => print all current options
+            if argc == 0:
+                opts = str(polynomial.display_cfg)
+                print(f"Current display options:\n{opts}")
+            elif args[1] not in polynomial.opttags.keys():
+                print(f"Unrecognized display option '{args[1]}'!")
+            elif argc >= 1:
+                option = args[1]
+                optionname = polynomial.singleopts_names[option][0]
+                # no 2nd argument => report option
+                if argc == 1:
+                    if polynomial.opttags[option] in polynomial.display_cfg:
+                        optionstate = polynomial.singleopts_names[option][2]
+                    else:
+                        optionstate = polynomial.singleopts_names[option][1]
+                    print(f"{optionname} is currently: {optionstate}")
+                elif argc >= 2 and args[2] == "toggle":
+                    # toggle option
+                    polynomial.display_cfg = polynomial.display_cfg ^ polynomial.opttags[option]
+                    # a bit WET, but i don't know how to do it better
+                    if polynomial.opttags[option] in polynomial.display_cfg:
+                        optionstate = polynomial.singleopts_names[option][2]
+                    else:
+                        optionstate = polynomial.singleopts_names[option][1]
+                    print(f"{optionname} has been set to: {optionstate}")
+                else:
+                    # user has entered a valid display option, but
+                    # 2nd argument is not "toggle"
+                    print("Second argument must be `toggle` or absent.")
+                    print(cmds_list["displayopts"])
         # data management commands        
         case "create":
             if argc == 0:
@@ -271,9 +326,12 @@ stored polynomials! Repeat the command to confirm.""")
                 print("No polynomials currently stored.")
             else:
                 polycount = len(polynomial.poly_dict.keys())
-                print(f"Storing {polycount} polynomials:")
+                if polycount == 1:
+                    print("Storing 1 polynomial:")
+                else:
+                    print(f"Storing {polycount} polynomials:")
                 print(polynomial.display_all())
-        case "delete":
+        case "delete" | "del":
             if argc == 0:
                 print(cmds_list[cmd])
                 continue

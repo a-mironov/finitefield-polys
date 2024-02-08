@@ -18,8 +18,30 @@ class DisplayFlag(Flag):
     # true => print terms in descending order, false => ascending order
     DESCENDING = auto()
     # not yet implemented: balanced -- coeffs in -(FCH-1)/2 .. (FCH-1)/2
-    # instead of 0 .. FCH-1
-    # BALANCED = auto()
+    BALANCED = auto()
+    def __str__(self):
+        result = ""
+        # degree
+        if DisplayFlag.DESCENDING in self:
+            result += "Descending-degree order"
+        else:
+            result += "Ascending-degree order"
+        result += "\n"
+        if DisplayFlag.BALANCED in self:
+            result += f"Balanced coefficients (-{(FCH-1)//2} to {(FCH-1)//2})"
+        else:
+            result += f"Unbalanced coefficients (0 to {FCH-1})"
+        return result
+
+display_cfg = DisplayFlag(0)
+opttags = {"deg": DisplayFlag.DESCENDING, "bal": DisplayFlag.BALANCED}
+# for echoing option states to the user
+# singleopts_names[option][0] == option name
+# singleopts_names[option][1] == meaning if false
+# singleopts_names[option][2] == meaning if true
+
+singleopts_names = {"deg": ("Term order", "Ascending", "Descending"),
+                    "bal": ("Coefficient display", "Unbalanced", "Balanced")}
 
 # polynomials stored as lists of coefficients
 # in ascending order, so p.coeffs[i] == x^i coefficient
@@ -40,10 +62,15 @@ class Poly():
         terms = []
         for i in range(len(self.coeffs)):
             coefficient = self.coeffs[i]
+            # characteristic 2 ignores balanced coeff option. only nonzero coeff is 1 anyway!
+            if (FCH != 2 and
+                DisplayFlag.BALANCED in display_cfg and 
+                coefficient > (FCH-1)//2):
+                coefficient -= FCH
             if coefficient != 0:
                 # constant term printed as is
                 if i == 0:
-                    terms.append(str(self.coeffs[0]))
+                    terms.append(str(coefficient))
                 else:
                     # power x^i, printed as just x for i=1
                     power = f"x^{i}"
@@ -51,10 +78,14 @@ class Poly():
                         power = "x"
                     if coefficient == 1:
                         terms.append(power)
+                    elif coefficient == -1:
+                        terms.append("-" + power)
                     else:
                         terms.append(str(coefficient) + power)
-                    
-        return " + ".join(terms)
+        if DisplayFlag.DESCENDING in display_cfg:
+            terms.reverse()
+        result = " + ".join(terms).replace("+ -","- ")
+        return result
 
     def normalize(self):
         """
