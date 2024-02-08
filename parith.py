@@ -100,31 +100,6 @@ def powmake_poly(basename: str, exponent: int, result: str):
     else:
         polynomial.poly_dict[result] = power
 
-def eucdiv(dividend, divisor):
-    """
-    performs Euclidean division, outputting a tuple of quotient and remainder
-
-    dividend: Poly
-    divisor: Poly
-    """
-    quotient = polynomial.Poly([0])
-    remainder = polynomial.Poly(dividend.coeffs)
-    if divisor.degree == -1:
-        raise ZeroDivisionError
-    if divisor.degree == 0:
-        remainder = remainder.scale(pow(divisor[0], -1, polynomial.FCH))
-        return (remainder, polynomial.Poly([0]))
-    leading_coeff = divisor.coeffs[-1]
-    while remainder.degree() >= divisor.degree():
-        # calculate the monomial a*x^n to cancel out the leading term of the dividend
-        # a is quotcoeff, n is remainder.degree() - divisor.degree()
-        quotcoeff = remainder.coeffs[-1] * pow(leading_coeff, -1, polynomial.FCH)
-        # making the monomial; coeffs are n zeros followed by quotcoeff
-        monom = polynomial.Poly([0]*(remainder.degree()-divisor.degree()) + [quotcoeff])
-        quotient = quotient + monom
-        remainder = remainder - divisor * monom
-    return (quotient, remainder)
-
 def eucdivmake_poly(divname: str, divisorname: str, quotname: str, remname: str):
     """
     performs Euclidean division and stores the results
@@ -147,7 +122,7 @@ def eucdivmake_poly(divname: str, divisorname: str, quotname: str, remname: str)
                              f"name '{result}' already in use.")
     # now we can do the division
     try:
-        quotient, remainder = eucdiv(dividend, divisor)
+        quotient, remainder = polynomial.eucdiv(dividend, divisor)
     except ZeroDivisionError:
         raise ZeroDivisionError
     polynomial.poly_dict[quotname] = quotient
@@ -180,3 +155,28 @@ def modmake_poly(divname: str, modname: str, result: str):
         raise e
 
     polynomial.poly_dict[result] = remainder
+
+def eea_make_poly(name1: str, name2: str, gcdname: str,
+                  coe1name: str, coe2name: str):
+    """
+    Finds the GCD and Bezout coefficients of polynomials
+    by names `name1` and `name2`, and stores the result
+    under names `gcdname`, `coe1name` and `coe2name`.
+    """
+    # read polynomials
+    try:
+        poly1 = polynomial.poly_dict[name1]
+        poly2 = polynomial.poly_dict[name2]
+    except KeyError as e:
+        raise e
+    # ensure destination names don't exist
+    for key in [gcdname, coe1name, coe2name]:
+        if key in polynomial.poly_dict.keys():
+            raise ValueError("Cannot store extended Euclidean "+
+                             "algorithm result -- "+
+                             f"name '{result}' already in use.")
+
+    gcd, coe1, coe2 = polynomial.ext_euclid_algo(poly1, poly2)
+    polynomial.make_poly(gcdname, gcd.coeffs)
+    polynomial.make_poly(coe1name, coe1.coeffs)
+    polynomial.make_poly(coe2name, coe2.coeffs)

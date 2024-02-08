@@ -5,15 +5,21 @@ exitflag = False
 # warning flag for setchar
 charflag = False
 
-welcomemsg = """Welcome to Finite Field Polynomial Calculator!
-Default field characteristic is 7. To change the characteristic, use the `setchar` command. Type `list` for all available commands."""
+welcomemsg = ("Welcome to Finite Field Polynomial Calculator!\n"+
+              f"Default field characteristic is {polynomial.FCH}.\n"+
+              "To set the characteristic, use the `setchar` command.\n"+
+              "Type `list` for all available commands.")
 print(welcomemsg)
 
 ## command help messages
 cmds_list = {}
+aliases = []
 # general and initialization commands
 cmds_list["exit"] = ("Usage: exit\n\n"+
-                     "Exits the program.")
+                     "Exits the program.\n\n"+
+                     "Alias: quit")
+cmds_list["quit"] = ("Alias for `exit`.")
+aliases.append("quit")
 cmds_list["help"] = ("Usage: help OR help <cmd> OR help <n>\n\n"+
                      "With no input, prints the list of help pages.\n"+
                      "With a command, prints the description and usage "+
@@ -21,10 +27,13 @@ cmds_list["help"] = ("Usage: help OR help <cmd> OR help <n>\n\n"+
                      "and usage for all commands on that help page.")
 cmds_list["list"] = ("Usage: list\n\n"+
                      "Lists all currently supported commands.")
-cmds_list["setchar"] = ("Usage: setchar <number>\n\n"+
+cmds_list["setchar"] = ("Usage: setchar <number> [CONFIRM]\n\n"+
                         "Sets the base field characteristic to `number`. "+
                         "If this causes a change, all stored polynomials "+
-                        "are deleted! Warns the user before proceeding.")
+                        "are deleted! Warns the user before proceeding.\n"+
+                        "If second argument is present and equal to "+
+                        "'CONFIRM', in all caps, without quotes, "+
+                        "this command bypasses the warning.")
 cmds_list["char"] = ("Usage: char\n\n"+
                      "Displays the current characteristic of the base field.")
 # data management commands
@@ -39,6 +48,13 @@ cmds_list["showall"] = ("Usage: showall\n\n"+
                         "Displays all currently stored polynomials on the screen.")
 cmds_list["delete"] = ("Usage: delete <name>\n\n"+
                        "Deletes the polynomial by name `name`.")
+cmds_list["deleteall"] = ("Usage: deleteall CONFIRM\n\n"+
+                          "If the first argument is 'CONFIRM', in all caps, "+
+                          "without quotes: deletes all stored polynomials. "+
+                          "Otherwise, does nothing.\n\n"+
+                          "Alias: flush")
+cmds_list["flush"] = ("Alias for `deleteall`.")
+aliases.append("flush")
 cmds_list["update"] = ("Usage: update <name> <coeffs>\n\n"+
                        "Updates the polynomial by name `name` with new "+
                        "coefficients `coeffs`, read in ascending order "+
@@ -57,20 +73,32 @@ cmds_list["add"] = ("Usage: add <name1> <name2> <result>\n\n"+
 cmds_list["subtract"] = ("Usage: subtract <name1> <name2> <result>\n\n"+
                     "Subtracts the polynomials by names `name1` and `name2` "+
                     "and stores the result in `result`. `name1` and `name2` "+
-                    "must exist, while `result` must not exist.")
+                    "must exist, while `result` must not exist.\n\n"+
+                    "Alias: sub")
+cmds_list["sub"] = ("Alias for `subtract`.")
+aliases.append("sub")
 cmds_list["multiply"] = ("Usage: multiply <name1> <name2> <result>\n\n"+
                     "Multiplies the polynomials by names `name1` and `name2` "+
                     "and stores the result in `result`. `name1` and `name2` "+
-                    "must exist, while `result` must not exist.")
+                    "must exist, while `result` must not exist.\n\n"+
+                    "Alias: mul")
+cmds_list["mul"] = ("Alias for `multiply`.")
+aliases.append("mul")
 cmds_list["lincomb"] = ("Usage: lincomb <weight1> <poly1> "+
                         "[<weight2> <poly2> [...]] <result>\n\n"+
                         "Computes a scalar linear combination of the "+
                         "indicated polynomials and stores the result in "+
-                        "`result` (which must not exist).")
+                        "`result` (which must not exist).\n\n"+
+                        "Alias: lc")
+cmds_list["lc"] = ("Alias for `lincomb`.")
+aliases.append("lc")
 cmds_list["power"] = ("Usage: power <basename> <exponent> <result>\n\n"+
                       "Raises the polynomial by name `basename` to power "+
                       "`exponent` and stores the result in `result` "+
-                      "(which must not exist).")
+                      "(which must not exist).\n\n"+
+                      "Alias: pow")
+cmds_list["pow"] = ("Alias for `power`.")
+aliases.append("pow")
 cmds_list["eucdiv"] = ("Usage: eucdiv <dividend> <divisor> <quot> <rem>\n\n"+
                        "Performs Euclidean division and stores the results "+
                        "(quotient and remainder) under their indicated names "+
@@ -81,11 +109,22 @@ cmds_list["eval"] = ("Usage: eval <name> <point>\n\n"+
 cmds_list["modulo"] = ("Usage: modulo <name> <modulus> <result>\n\n"+
                        "Reduces polynomial `name` modulo polynomial "+
                        "`modulus` and stores the result in `result` "+
-                       "(which must not exist).")
+                       "(which must not exist).\n\n"+
+                       "Alias: mod")
+cmds_list["mod"] = ("Alias for `modulo`.")
+aliases.append("mod")
+cmds_list["eea"] = ("Usage: eea <poly1> <poly2> <gcd> <coe1> <coe2>\n\n"+
+                    "Performs the extended Euclidean algorithm on "+
+                    "polynomials `poly1` and `poly2`, finding their "+
+                    "greatest common divisor and its Bezout "+
+                    "coefficients. Stores the GCD under name `gcd`, "+
+                    "and the coefficients under names `coe1` and `coe2`. "+
+                    "All three output names must not exist.")
 
 help_pages = [["exit","help","list","setchar","char"],
               ["create","show","showall","delete","update","copy","rename"],
-              ["add","subtract","multiply","lincomb","power","eucdiv","eval","modulo"]]
+              ["add","subtract","multiply","lincomb",
+               "power","eval","modulo","eucdiv","eea"]]
 
 special_help_msg = ("Type `list` to see all commands.\n"+
                     "Type `help <cmd>` to view the description of one command,"+
@@ -112,7 +151,7 @@ def parse_lincomb(arguments: list):
             try:
                 weights.append(int(arguments[i]))
             except ValueError:
-                raise ValueError(f"Could not parse {arguments[i]} as integer")
+                raise ValueError(f"Could not parse {arguments[i]} as integer!")
         else:
             name = arguments[i]
             if name not in polynomial.poly_dict.keys():
@@ -142,8 +181,15 @@ while not exitflag:
 
     ## commands processing
     match cmd:
-        # initialization & meta commands
+        # initialization & general commands
         case "setchar":
+            if argc == 0:
+                print("Enter new characteristic!")
+                print(cmds_list[cmd])
+                continue
+            # bypass warning if 2nd arg is "CONFIRM"
+            if argc >= 2 and args[2] == "CONFIRM":
+                charflag = True
             if not charflag:
                 print(f"""Warning! Changing the characteristic will delete all
 stored polynomials! Repeat the command to confirm.""")
@@ -164,11 +210,11 @@ stored polynomials! Repeat the command to confirm.""")
                         charflag = False
         case "char":
             print(f"Field characteristic is {polynomial.FCH}.")
-        case "exit":
+        case "exit" | "quit":
             print("Goodbye.")
             exitflag = True
         case "help":
-            # if user typed only "help", return desc for help itself
+            # if user typed only "help", return special help msg
             if argc == 0:
                 print(special_help_msg)
             elif args[1] in cmds_list.keys():
@@ -191,9 +237,12 @@ stored polynomials! Repeat the command to confirm.""")
                         print("\n",command)
                         print(cmds_list[command])
         case "list":
-            print("Available commands:")
+            print("Available commands (aliases in <angle brackets>):")
             for command in sorted(cmds_list.keys()):
-                print(command)
+                if command in aliases:
+                    print(f"<{command}>")
+                else:
+                    print(command)
         # data management commands        
         case "create":
             if argc == 0:
@@ -221,6 +270,8 @@ stored polynomials! Repeat the command to confirm.""")
             if len(polynomial.poly_dict.keys()) == 0:
                 print("No polynomials currently stored.")
             else:
+                polycount = len(polynomial.poly_dict.keys())
+                print(f"Storing {polycount} polynomials:")
                 print(polynomial.display_all())
         case "delete":
             if argc == 0:
@@ -233,6 +284,13 @@ stored polynomials! Repeat the command to confirm.""")
                 print(f"No polynomial by name {name} to delete.")
             else:
                 print(f"Polynomial {name} deleted.")
+        case "deleteall" | "flush":
+            if argc == 0 or args[1] != "CONFIRM":
+                print("Confirm deletion of all stored polynomials "+
+                      f"by typing `{cmd} CONFIRM`.")
+            else:
+                polynomial.poly_dict.clear()
+                print("All stored polynomials deleted.")
         case "update":
             if argc == 0:
                 print(cmds_list[cmd])
@@ -286,7 +344,7 @@ stored polynomials! Repeat the command to confirm.""")
                 print(f"Polynomial {name} not found!")
             else:
                 print(f"Sum {args[1]}+{args[2]} stored in {args[3]}.")
-        case "subtract":
+        case "subtract" | "sub":
             if argc < 3:
                 print("Too few arguments!")
                 print(cmds_list[cmd])
@@ -300,14 +358,15 @@ stored polynomials! Repeat the command to confirm.""")
                 print(f"Polynomial {name} not found!")
             else:
                 print(f"Difference {args[1]}-{args[2]} stored in {args[3]}.")
-        case "lincomb":
+        case "lincomb" | "lc":
             if argc < 3:
                 print("Too few arguments!")
                 print(cmds_list[cmd])
                 continue
             resultname = args[-1]
             if resultname in polynomial.poly_dict.keys():
-                print(f"Cannot store linear combination in {result} -- name already in use.")
+                print(f"Cannot store linear combination in {result} -- "+
+                      "name already in use.")
             else:
                 try:
                     weights, polynames = parse_lincomb(args[1:-1])
@@ -323,7 +382,7 @@ stored polynomials! Repeat the command to confirm.""")
                     result = polynomial.lincomb(weights, polys)
                     polynomial.make_poly(resultname, result.coeffs)
                     print(f"Linear combination stored in {resultname}.")
-        case "multiply":
+        case "multiply" | "mul":
             if argc < 3:
                 print("Too few arguments!")
                 print(cmds_list[cmd])
@@ -337,7 +396,7 @@ stored polynomials! Repeat the command to confirm.""")
                 print(f"Polynomial {name} not found!")
             else:
                 print(f"Product {args[1]}*{args[2]} stored in {args[3]}.")
-        case "power":
+        case "power" | "pow":
             if argc < 3:
                 print("Too few arguments!")
                 print(cmds_list[cmd])
@@ -366,8 +425,9 @@ stored polynomials! Repeat the command to confirm.""")
             except ZeroDivisionError:
                 print(f"Divisor {args[2]} cannot be zero!")
             else:
-                print(f"Euclidean division of {args[1]} by {args[2]} completed.")
-                print(f"Quotient and remainder stored in {args[3]} and {args[4]} respectively.")
+                print(f"Euclidean division of {args[1]} by {args[2]} "+
+                      "completed. Quotient and remainder stored in "+
+                      f"{args[3]} and {args[4]} respectively.")
         case "eval":
             if argc < 2:
                 print("Too few arguments!")
@@ -383,7 +443,7 @@ stored polynomials! Repeat the command to confirm.""")
                 print(f"Could not parse {args[2]} as integer!")
             else:
                 print(f"{name}({args[2]}) = {result}")
-        case "modulo":
+        case "modulo" | "mod":
             if argc < 3:
                 print("Too few arguments!")
                 print(cmds_list[cmd])
@@ -398,5 +458,22 @@ stored polynomials! Repeat the command to confirm.""")
             else:
                 print(f"Remainder of {args[1]} mod {args[2]} "+
                       f"stored in {args[3]}.")
+        case "eea":
+            if argc < 5:
+                print("Too few arguments!")
+                print(cmds_list[cmd])
+                continue
+            try:
+                parith.eea_make_poly(args[1],args[2],args[3],args[4],args[5])
+            except KeyError as e:
+                name = e.args[0]
+                print(f"Polynomial {name} not found!")
+            except ValueError as e:
+                print(e)
+            else:
+                print("Extended Euclidean algorithm performed on "+
+                      f"polynomials {args[1]} and {args[2]}. "+
+                      f"GCD stored in {args[3]}, coefficients "+
+                      f"stored in {args[4]} and {args[5]}.")
         case _:
             print(f"Unknown command: {cmd}!")
