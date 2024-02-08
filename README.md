@@ -18,4 +18,6 @@ This is a calculation system for polynomials over finite fields. It stores and c
 ## Data management
 - File I/O: Save current workspace to a file, load polynomials in from a file (overwriting and additive)
 ## Arithmetic
-- Irreducibility and primitivity checks for polynomials.
+- Irreducibility and primitivity checks for polynomials
+- Factorization of polynomials
+- Calculations in non-prime finite fields
