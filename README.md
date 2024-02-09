@@ -1,5 +1,9 @@
 This is a calculation system for polynomials over finite fields. It stores and calculates with polynomials in memory as the user enters commands through a text-based interface.
 
+# Instructions
+
+Run the `main.py` file.
+
 # Currently supported features
 
 ## General
