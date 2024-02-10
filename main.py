@@ -157,6 +157,37 @@ stored polynomials! Repeat the command to confirm.""")
                 print(e)
             else:
                 print(f"Polynomial {name} created.")
+
+        case "createbinary" | "cbin":
+            if argc == 0:
+                print("Too few arguments!")
+                print(cmdinfo.cmds_list["createbinary"])
+                continue
+            if pol.FCH != 2:
+                print("This command is only available in "+
+                      "characteristic 2.")
+                continue
+            degs = []
+            # parse degrees list
+            try:
+                for arg in args[2:]:
+                    d = int(arg)
+                    assert(d >= 0)
+                    degs.append(d)
+            except ValueError:
+                print(f"Cannot parse {arg} as integer!")
+            except AssertionError:
+                print(f"Cannot include negative exponent {d}!")
+            # construct coeffs
+            coeffs = [0] * (max(degs) + 1)
+            for d in degs:
+                coeffs[d] += 1
+            try:
+                pol.make_poly(args[1], coeffs)
+            except ValueError as e:
+                print(e)
+            else:
+                print(f"Polynomial {args[1]} created.")
                 
         case "show":
             if argc == 0:
@@ -464,6 +495,20 @@ stored polynomials! Repeat the command to confirm.""")
                 print(f"{order}{aux.ordinal_suffix(order)} derivative "+
                       f"of {args[1]} stored in {args[2]}.")
         # property commands
+        case "degree" | "deg":
+            if argc == 0:
+                print("Too few arguments!")
+                print(cmdinfo.cmds_list["degree"])
+                continue
+            try:
+                poly = pol.poly_dict[args[1]]
+                result = poly.degree()
+            except KeyError as e:
+                name = e.args[0]
+                print(f"Polynomial {name} not found!")
+            else:
+                print(f"deg({args[1]}) = {result}")
+                
         case "irred":
             if argc == 0:
                 print("Too few arguments!")
@@ -488,18 +533,21 @@ stored polynomials! Repeat the command to confirm.""")
                 if argc >= 2 and args[2] == "reason":
                     print("Reason:",reason)
                 
-        case "degree" | "deg":
+        case "prim":
             if argc == 0:
                 print("Too few arguments!")
-                print(cmdinfo.cmds_list["degree"])
+                print(cmdinfo.cmds_list[cmd])
                 continue
             try:
                 poly = pol.poly_dict[args[1]]
-                result = poly.degree()
             except KeyError as e:
                 name = e.args[0]
                 print(f"Polynomial {name} not found!")
             else:
-                print(f"deg({args[1]}) = {result}")
+                if pprops.is_primitive(poly):
+                    verdict = "primitive"
+                else:
+                    verdict = "NOT primitive"
+                print(f"Polynomial {args[1]} is {verdict}.")
         case _:
             print(f"Unknown command: {cmd}!")

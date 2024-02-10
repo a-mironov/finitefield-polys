@@ -62,6 +62,12 @@ cmds_list["create"] = ("Usage: create <name> <coeffs>\n\n"+
                        "Creates a polynomial by name `name` with "+
                        "coefficients `coeffs`, read in ascending order "+
                        "of degree.")
+cmds_list["createbinary"] = ("Usage: createbinary <name> <degs>\n\n"+
+                             "Creates a polynomial equal to the sum of "+
+                             "x^d for integers d in `degs`.\n"+
+                             "Works ONLY in characteristic 2.")
+cmds_list["cbin"] = ("Alias for `createbinary`.")
+aliases.append("cbin")
 cmds_list["show"] = ("Usage: show <name>\n\n"+
                      "Displays the polynomial by name `name` (if it exists) "+
                      "on the screen.")
@@ -174,12 +180,17 @@ cmds_list["irred"] = ("Usage: irred <name> [reason]\n\n"+
                       "If second argument is `reason`, also prints "+
                       "the reason for (ir)reducibility as detected "+
                       "by the irreducibility checker.")
+cmds_list["prim"] = ("Usage: prim <name>\n\n"+
+                     "Checks if polynomial `name` is primitive.\n"+
+                     "Note: polynomials that are not irreducible, "+
+                     "as well as those of degree 1 or under, "+
+                     "are not considered primitive.")
 
 help_pages = [["exit","help","list","setchar","char","displayopts"],
               ["create","show","showall","delete","update","copy","rename"],
               ["add","subtract","multiply","lincomb",
                "power","eval","modulo","eucdiv","eea","diff"],
-              ["degree", "irred"]]
+              ["degree", "irred", "prim"]]
 
 special_help_msg = ("Type `list` to see all commands.\n"+
                     "Type `help <cmd>` to view the description of one command,"+

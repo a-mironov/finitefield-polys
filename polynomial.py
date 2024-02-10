@@ -65,13 +65,19 @@ class Poly():
     def __str__(self):
         # constant => print as-is
         if len(self.coeffs) == 1:
-            return str(self.coeffs[0])
+            coefficient = self.coeffs[0]
+            if (FCH != 2 and
+                DisplayFlag.BALANCED in display_cfg and 
+                coefficient > (FCH-1)//2):
+                coefficient -= FCH
+            return str(coefficient)
         # otherwise iterate thru terms
         # adding only those with nonzero coeffs to the string rep
         terms = []
         for i in range(len(self.coeffs)):
             coefficient = self.coeffs[i]
-            # characteristic 2 ignores balanced coeff option. only nonzero coeff is 1 anyway!
+            # characteristic 2 ignores balanced coeff option.
+            # only nonzero coeff is 1 anyway!
             if (FCH != 2 and
                 DisplayFlag.BALANCED in display_cfg and 
                 coefficient > (FCH-1)//2):
@@ -317,7 +323,23 @@ def constant(value: int):
     """
     return Poly([value])
 
-
+def x_power_modulo(deg: int, f):
+    """
+    Creates a polynomial congruent to x^deg modulo f.
+    """
+    # repeated squaring
+    
+    # 1 mod anything is 1
+    if deg == 0:
+        return constant(1)
+    if deg == 1:
+        return monomial(deg=1) % f
+    k = deg // 2
+    temp = x_power_modulo(k, f)
+    result = (temp * temp) % f
+    if deg % 2 == 1:
+        result = (result * monomial(deg=1)) % f
+    return result
 
 def make_poly(name: str, coefficients: list):
     """

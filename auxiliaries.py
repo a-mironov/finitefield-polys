@@ -60,7 +60,7 @@ def prime_factors(n: int):
                          f"nonpositive integer {n}!")
     if n == 1:
         return []
-    if pol.is_prime(n):
+    if is_prime(n):
         return [n]
     factors = []
     p = 2
@@ -87,7 +87,7 @@ def proper_factors(n: int):
     if n == 0:
         raise ValueError("Cannot factorize 0.")
     if n < 0:
-        return all_factors(-n)
+        return proper_factors(-n)
     if n == 1 or is_prime(n):
         return []
 

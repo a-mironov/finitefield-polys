@@ -38,16 +38,6 @@ def is_p_power(poly):
     """
     Checks whether a polynomial is a perfect p'th power,
     where p = pol.FCH.
-
-    In any ring of characteristic p, the identity
-        (a + b) ** p == a ** p + b ** p
-    holds.
-
-    Therefore, being a perfect p'th power for a
-    polynomial means being a linear combination of
-    x^(kp), k >= 0. In other words, the only nonzero
-    coefficients should be found on powers of x
-    that are a multiple of p.
     """
     p = pol.FCH
     # check coefficients
@@ -97,24 +87,27 @@ def is_irreducible(poly):
     Checks polynomial `poly`, copied as `f`, for irreducibility.
     Returns:
     - True if the polynomial is irreducible, False otherwise.
-    - reason: the reason for (ir)reducibility.
-    
-    Uses Rabin's test of irreducibility:
-    Letting n = deg(f),
-    p_0, ..., p_k be the prime factors of n,
-    n_i = n // p_i,
-    `f` is irreducible if and only if both of the following conditions
-    are true:
-    1. gcd(f, x^(FCH^n_i) - x) = 1 for all i
-    2. f divides x^(FCH^n) - x
-
-    implementation detail:
-    since storing x^(q^n_i) - x and x^(q^n) - x directly would be
-    prohibitively expensive due to their high degree,
-    they are calculated modulo `f` via the helper function
-    xqpower(n, f).
+    - reason: the reason for (ir)reducibility; intended
+      for printing on the screen with `irred <poly> reason`.
     """
+    
+    # Uses Rabin's test of irreducibility:
+    # Letting n = deg(f),
+    # p_0, ..., p_k be the prime factors of n,
+    # n_i = n // p_i,
+    # `f` is irreducible if and only if both of the following conditions
+    # are true:
+    # 1. gcd(f, x^(FCH^n_i) - x) = 1 for all i
+    # 2. f divides x^(FCH^n) - x
+    #
+    # implementation detail:
+    # since storing x^(q^n_i) - x and x^(q^n) - x directly would be
+    # prohibitively expensive due to their high degree,
+    # they are calculated modulo `f` via the helper function
+    # xqpower(n, f).
+    
     reason = ""
+    
     # get some edge cases out of the way first!
     
     # constant => NOT irreducible
@@ -167,8 +160,8 @@ def is_irreducible(poly):
     # get the degree as well
     n = f.degree()
 
-    # p_i and n_i (see docstring)
-    primes = prime_factors(n)
+    # p_i and n_i (see comment on top)
+    primes = aux.prime_factors(n)
     prime_complements = []
     for p in primes:
         prime_complements.append(n // p)
@@ -199,7 +192,6 @@ def is_irreducible(poly):
     reason = "Rabin's test passed"
     return (True, reason)
 
-# UNIMPLEMENTED
 def is_primitive(poly):
     """
     Checks whether a polynomial is primitive, as follows:
@@ -214,4 +206,35 @@ def is_primitive(poly):
        not primitive -- its root has order d rather than p^n - 1,
        and so fails to generate GF(p^n)*.
     """
-    pass
+
+    # all primitives are irreducible
+    if not is_irreducible(poly):
+        return False
+
+    # reject linears and constants
+    # this function will be needed for validating field extensions
+    # and those don't give any
+    n = poly.degree()
+    if n <= 1:
+        return False
+
+    p = pol.FCH
+    divs = aux.proper_factors(p ** n - 1)
+
+    # edge case: if p^n - 1 is prime, primitivity is guaranteed
+    # can happen if p=2, i.e. if p^n - 1 is a Mersenne prime
+    if aux.is_prime(p ** n - 1):
+        return True
+
+    # for a primitive polynomial, we want the
+    # order of x modulo poly to be p^n - 1
+    # so if x^d % poly = 1 for any proper divisor d of p^n - 1
+    # we know it isn't
+    for d in divs:
+        if pol.x_power_modulo(d, poly) == pol.constant(1):
+            return False
+    # and if we made it through the loop, we know
+    # that the order of x modulo poly is
+    # NOT any proper divisor of p^n - 1
+    # therefore the polynomial is indeed primitive
+    return True
