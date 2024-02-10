@@ -33,6 +33,8 @@ This is a calculation system for polynomials over finite fields. It stores and c
 
 # Planned features
 
+## General
+- Name validation: forbid the use of certain names for polynomial creation
 ## Data management
 - File I/O: Save current workspace to a file, load polynomials in from a file (overwriting and additive)
 - For multi-output commands, allow the use of `_` in lieu of an output name to discard some outputs
