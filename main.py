@@ -1,13 +1,16 @@
 import polynomial
 import parith
+import pprops
 
 exitflag = False
 # warning flag for setchar
 charflag = False
 
-welcomemsg = ("Welcome to Finite Field Polynomial Calculator!\n"+
+welcomemsg = ("Welcome to Finite Field Polynomial Calculator!\n\n"+
               f"Default field characteristic is {polynomial.FCH}.\n"+
-              "To set the characteristic, use the `setchar` command.\n"+
+              "To set the characteristic, use the `setchar` command.\n\n"+
+              "Current display options are:\n"+
+              str(polynomial.display_cfg)+"\n\n"+
               "Type `list` for all available commands.")
 print(welcomemsg)
 
@@ -144,11 +147,33 @@ cmds_list["eea"] = ("Usage: eea <poly1> <poly2> <gcd> <coe1> <coe2>\n\n"+
                     "coefficients. Stores the GCD under name `gcd`, "+
                     "and the coefficients under names `coe1` and `coe2`. "+
                     "All three output names must not exist.")
+cmds_list["diff"] = ("Usage: diff <name> <result> OR "+
+                     "diff <name> <result> <order>\n\n"+
+                     "Differentiates polynomial `name` `order` times "+
+                     "and stores the result in `result` "+
+                     "(which must not exist).\n"+
+                     "With `order` not specified, differentiates once "+
+                     "(i.e. takes the 1st derivative).")
+# property commands
+cmds_list["degree"] = ("Usage: degree <name>\n\n"+
+                       "Prints the degree of the polynomial `name` on "+
+                       "the screen.\n\n"+
+                       "Alias: deg")
+cmds_list["deg"] = ("Alias for `degree`.")
+aliases.append("deg")
+cmds_list["irred"] = ("Usage: irred <name> [reason]\n\n"+
+                      "Checks if polynomial `name` is irreducible, "+
+                      "and prints the result on the screen.\n"+
+                      "If second argument is `reason`, also prints "+
+                      "the reason for (ir)reducibility as detected "+
+                      "by the irreducibility checker.")
+
 
 help_pages = [["exit","help","list","setchar","char","displayopts"],
               ["create","show","showall","delete","update","copy","rename"],
               ["add","subtract","multiply","lincomb",
-               "power","eval","modulo","eucdiv","eea"]]
+               "power","eval","modulo","eucdiv","eea","diff"],
+              ["degree", "irred"]]
 
 special_help_msg = ("Type `list` to see all commands.\n"+
                     "Type `help <cmd>` to view the description of one command,"+
@@ -156,7 +181,8 @@ special_help_msg = ("Type `list` to see all commands.\n"+
                     "in one of the following groups:\n\n"+
                     "1. General commands\n"+
                     "2. Data management commands\n"+
-                    "3. Arithmetic commands")
+                    "3. Arithmetic commands\n"+
+                    "4. Property commands")
 
 def parse_lincomb(arguments: list):
     """
@@ -183,6 +209,28 @@ def parse_lincomb(arguments: list):
             polynames.append(name)
     return (weights, polynames)
 
+def ordinal_suffix(n: int):
+    """
+    Returns the English ordinal suffix (-st, -nd, -rd, or -th)
+    of the specified number n. Auxiliary.
+    """
+    if n < 0:
+        return ordinal_suffix(-n)
+    # 10th through 19th
+    if n % 100 in range(10, 20):
+        return "th"
+    # ends in 1 => (fir)st, 2 => (seco)nd, 3 => (thi)rd,
+    # anything else => (four, fif, six, seven, eigh, nin)th
+    # all multiples of 10 get -th as well
+    match (n % 10):
+        case 1:
+            return "st"
+        case 2:
+            return "nd"
+        case 3:
+            return "rd"
+        case _:
+            return "th"
 
 cmd = ""
 while not exitflag:
@@ -232,11 +280,14 @@ stored polynomials! Repeat the command to confirm.""")
                     else:
                         print(f"Characteristic set to {new_char} successfully.")
                         charflag = False
+                        
         case "char":
             print(f"Field characteristic is {polynomial.FCH}.")
+            
         case "exit" | "quit":
             print("Goodbye.")
             exitflag = True
+            
         case "help":
             # if user typed only "help", return special help msg
             if argc == 0:
@@ -260,6 +311,7 @@ stored polynomials! Repeat the command to confirm.""")
                     for command in page:
                         print("\n",command)
                         print(cmds_list[command])
+                        
         case "list":
             print("Available commands (aliases in <angle brackets>):")
             for command in sorted(cmds_list.keys()):
@@ -267,6 +319,7 @@ stored polynomials! Repeat the command to confirm.""")
                     print(f"<{command}>")
                 else:
                     print(command)
+                    
         case "displayopts" | "dpo":
             # no args => print all current options
             if argc == 0:
@@ -298,6 +351,7 @@ stored polynomials! Repeat the command to confirm.""")
                     # 2nd argument is not "toggle"
                     print("Second argument must be `toggle` or absent.")
                     print(cmds_list["displayopts"])
+                    
         # data management commands        
         case "create":
             if argc == 0:
@@ -310,6 +364,7 @@ stored polynomials! Repeat the command to confirm.""")
                 print(e)
             else:
                 print(f"Polynomial {name} created.")
+                
         case "show":
             if argc == 0:
                 print(cmds_list[cmd])
@@ -321,6 +376,7 @@ stored polynomials! Repeat the command to confirm.""")
                 print(f"No polynomial by name {name} to print.")
             else:
                 print(display_string)
+                
         case "showall":
             if len(polynomial.poly_dict.keys()) == 0:
                 print("No polynomials currently stored.")
@@ -331,6 +387,7 @@ stored polynomials! Repeat the command to confirm.""")
                 else:
                     print(f"Storing {polycount} polynomials:")
                 print(polynomial.display_all())
+                
         case "delete" | "del":
             if argc == 0:
                 print(cmds_list[cmd])
@@ -342,6 +399,7 @@ stored polynomials! Repeat the command to confirm.""")
                 print(f"No polynomial by name {name} to delete.")
             else:
                 print(f"Polynomial {name} deleted.")
+                
         case "deleteall" | "flush":
             if argc == 0 or args[1] != "CONFIRM":
                 print("Confirm deletion of all stored polynomials "+
@@ -349,6 +407,7 @@ stored polynomials! Repeat the command to confirm.""")
             else:
                 polynomial.poly_dict.clear()
                 print("All stored polynomials deleted.")
+                
         case "update":
             if argc == 0:
                 print(cmds_list[cmd])
@@ -361,6 +420,7 @@ stored polynomials! Repeat the command to confirm.""")
                       "Use `create` to create new polynomials.")
             else:
                 print(f"Polynomial {name} updated.")
+                
         case "copy":
             if argc < 2:
                 print("Too few arguments!")
@@ -373,6 +433,7 @@ stored polynomials! Repeat the command to confirm.""")
                 print(f"No polynomial by name {name} to copy.")
             else:
                 print(f"Polynomial {args[1]} copied to {args[2]}.")
+                
         case "rename":
             if argc < 2:
                 print("Too few arguments!")
@@ -387,6 +448,7 @@ stored polynomials! Repeat the command to confirm.""")
                 print(e)
             else:
                 print(f"Polynomial {args[1]} renamed to {args[2]}.")
+                
         # arithmetic commands        
         case "add":
             if argc < 3:
@@ -402,6 +464,7 @@ stored polynomials! Repeat the command to confirm.""")
                 print(f"Polynomial {name} not found!")
             else:
                 print(f"Sum {args[1]}+{args[2]} stored in {args[3]}.")
+                
         case "subtract" | "sub":
             if argc < 3:
                 print("Too few arguments!")
@@ -416,6 +479,7 @@ stored polynomials! Repeat the command to confirm.""")
                 print(f"Polynomial {name} not found!")
             else:
                 print(f"Difference {args[1]}-{args[2]} stored in {args[3]}.")
+                
         case "lincomb" | "lc":
             if argc < 3:
                 print("Too few arguments!")
@@ -440,6 +504,7 @@ stored polynomials! Repeat the command to confirm.""")
                     result = polynomial.lincomb(weights, polys)
                     polynomial.make_poly(resultname, result.coeffs)
                     print(f"Linear combination stored in {resultname}.")
+                    
         case "multiply" | "mul":
             if argc < 3:
                 print("Too few arguments!")
@@ -454,6 +519,7 @@ stored polynomials! Repeat the command to confirm.""")
                 print(f"Polynomial {name} not found!")
             else:
                 print(f"Product {args[1]}*{args[2]} stored in {args[3]}.")
+                
         case "power" | "pow":
             if argc < 3:
                 print("Too few arguments!")
@@ -468,6 +534,7 @@ stored polynomials! Repeat the command to confirm.""")
                 print(f"Polynomial {name} not found!")
             else:
                 print(f"Power {args[1]}^{args[2]} stored in {args[3]}.")
+                
         case "eucdiv":
             if argc < 4:
                 print("Too few arguments!")
@@ -486,6 +553,7 @@ stored polynomials! Repeat the command to confirm.""")
                 print(f"Euclidean division of {args[1]} by {args[2]} "+
                       "completed. Quotient and remainder stored in "+
                       f"{args[3]} and {args[4]} respectively.")
+                
         case "eval":
             if argc < 2:
                 print("Too few arguments!")
@@ -501,6 +569,7 @@ stored polynomials! Repeat the command to confirm.""")
                 print(f"Could not parse {args[2]} as integer!")
             else:
                 print(f"{name}({args[2]}) = {result}")
+                
         case "modulo" | "mod":
             if argc < 3:
                 print("Too few arguments!")
@@ -516,6 +585,7 @@ stored polynomials! Repeat the command to confirm.""")
             else:
                 print(f"Remainder of {args[1]} mod {args[2]} "+
                       f"stored in {args[3]}.")
+                
         case "eea":
             if argc < 5:
                 print("Too few arguments!")
@@ -533,5 +603,64 @@ stored polynomials! Repeat the command to confirm.""")
                       f"polynomials {args[1]} and {args[2]}. "+
                       f"GCD stored in {args[3]}, coefficients "+
                       f"stored in {args[4]} and {args[5]}.")
+                
+        case "diff":
+            if argc < 2:
+                print("Too few arguments!")
+                print(cmds_list[cmd])
+            order = 1
+            if argc >= 3:
+                try:
+                    order = int(args[3])
+                except ValueError as e:
+                    print(f"Could not parse {args[3]} as integer!")
+            try:
+                parith.diffmake_poly(args[1], order, args[2])
+            except KeyError as e:
+                name = e.args[0]
+                print(f"Polynomial {name} not found!")
+            except ValueError as e:
+                print(e)
+            else:
+                print(f"{order}{ordinal_suffix(order)} derivative "+
+                      f"of {args[1]} stored in {args[2]}.")
+        # property commands
+        case "irred":
+            if argc == 0:
+                print("Too few arguments!")
+                print(cmds_list[cmd])
+                continue
+            if argc >= 2 and args[2] != "reason":
+                print("Second argument must be `reason` or absent.")
+                print(cmds_list[cmd])
+                continue
+            try:
+                poly = polynomial.poly_dict[args[1]]
+            except KeyError as e:
+                name = e.args[0]
+                print(f"Polynomial {name} not found!")
+            else:
+                irred_result, reason = pprops.is_irreducible(poly)
+                if irred_result:
+                    verdict = "irreducible"
+                else:
+                    verdict = "NOT irreducible"
+                print(f"Polynomial {args[1]} is {verdict}.")
+                if argc >= 2 and args[2] == "reason":
+                    print("Reason:",reason)
+                
+        case "degree" | "deg":
+            if argc == 0:
+                print("Too few arguments!")
+                print(cmds_list["degree"])
+                continue
+            try:
+                poly = polynomial.poly_dict[args[1]]
+                result = poly.degree()
+            except KeyError as e:
+                name = e.args[0]
+                print(f"Polynomial {name} not found!")
+            else:
+                print(f"deg({args[1]}) = {result}")
         case _:
             print(f"Unknown command: {cmd}!")

@@ -27,19 +27,25 @@ class DisplayFlag(Flag):
         else:
             result += "Ascending-degree order"
         result += "\n"
-        if DisplayFlag.BALANCED in self:
-            result += f"Balanced coefficients (-{(FCH-1)//2} to {(FCH-1)//2})"
+        if FCH != 2:
+            if DisplayFlag.BALANCED in self:
+                result += ("Balanced coefficients "+
+                          f"(-{(FCH-1)//2} to {(FCH-1)//2})")
+            else:
+                result += f"Unbalanced coefficients (0 to {FCH-1})"
+        elif DisplayFlag.BALANCED in self:
+            result += "Balanced coefficients (0 to 1 -- option ignored)"
         else:
-            result += f"Unbalanced coefficients (0 to {FCH-1})"
+            result += "Unbalanced coefficients (0 to 1 -- option ignored)"
         return result
 
-display_cfg = DisplayFlag(0)
+display_cfg = DisplayFlag.DESCENDING | DisplayFlag.BALANCED
 opttags = {"deg": DisplayFlag.DESCENDING, "bal": DisplayFlag.BALANCED}
+
 # for echoing option states to the user
 # singleopts_names[option][0] == option name
 # singleopts_names[option][1] == meaning if false
 # singleopts_names[option][2] == meaning if true
-
 singleopts_names = {"deg": ("Term order", "Ascending", "Descending"),
                     "bal": ("Coefficient display", "Unbalanced", "Balanced")}
 
@@ -106,7 +112,7 @@ class Poly():
 
     def degree(self):
         # zero polynomial is defined with degree -1
-        if len(self.coeffs) == 0 and self.coeffs[0] == 0:
+        if len(self.coeffs) == 1 and self.coeffs[0] == 0:
             return -1
         return len(self.coeffs) - 1
 
@@ -273,6 +279,26 @@ class Poly():
             power = (power * x) % FCH
 
         return result
+
+    def deriv(self, order: int = 1):
+        """
+        Takes the derivative of a polynomial to the specified order.
+        """
+        order = int(order)
+        if order < 0:
+            raise ValueError(f"Cannot take derivative of order {order} -- "+
+                             "order is negative.")
+        if order == 1:
+            resultcfs = [0] * len(self.coeffs)
+            for i in range(len(self.coeffs)):
+                # self.coeffs[i] * x^i --> i * self.coeffs[i] * x^(i-1)
+                # derivative power rule
+                resultcfs[i] = (i * self.coeffs[i]) % FCH
+            result = Poly(resultcfs[1:])
+            result.normalize()
+            return result
+        # order 2 or higher -- recursive
+        return self.deriv(order-1).deriv()
                 
 
 def monomial(coeff: int=1, deg: int=0):
@@ -521,7 +547,7 @@ def ext_euclid_algo(poly1, poly2):
     # we can actually start cooking
     # the number of EEA iterations is at most this much,
     # since the degree goes down by 1 every time:
-    iters = min(poly1.degree(), poly2.degree())
+    iters = min(poly1.degree(), poly2.degree()) + 1
 
     # initialize these lists to have the required length
     # because messing with appends failed spectacularly
@@ -541,7 +567,7 @@ def ext_euclid_algo(poly1, poly2):
 
     # so now we have our rems, we need to find the last nonzero one
     k = len(rems)-1
-    while len(rems[k].coeffs) == 1 and rems[k].coeffs[0] == 0:
+    while rems[k].is_zero():
         k -= 1
 
     # QoL: make the GCD monic

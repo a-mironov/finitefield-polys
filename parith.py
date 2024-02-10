@@ -1,7 +1,6 @@
 # parith (polynomial arithmetic) module
 
 # contains functions to interface arithmetic with polynomial storage
-# as well as euclidean division
 
 import polynomial
 
@@ -76,8 +75,7 @@ def mulmake_poly(name1: str, name2: str, result: str):
     total = addend1 * addend2
     # not calling make_poly b/c the polynomial object is already there
     polynomial.poly_dict[result] = total
-    
-    
+     
 def powmake_poly(basename: str, exponent: int, result: str):
     """
     raises a polynomial to an exponent and stores the result
@@ -180,3 +178,23 @@ def eea_make_poly(name1: str, name2: str, gcdname: str,
     polynomial.make_poly(gcdname, gcd.coeffs)
     polynomial.make_poly(coe1name, coe1.coeffs)
     polynomial.make_poly(coe2name, coe2.coeffs)
+
+def diffmake_poly(name: str, order: int, result: str):
+    """
+    Takes the derivative of polynomial `name`
+    of order `order`, and stores the result
+    under name `result`.
+    """
+    # read polynomial
+    try:
+        poly = polynomial.poly_dict[name]
+    except KeyError as e:
+        raise e
+    # ensure destination name doesn't exist
+    if result in polynomial.poly_dict.keys():
+        raise ValueError("Cannot store differentiation result -- "+
+                         f"name {result} already in use.")
+    if order == 0:
+        polynomial.copy_poly(name, result)
+    poly_diffd = poly.deriv(order)
+    polynomial.poly_dict[result] = poly_diffd
