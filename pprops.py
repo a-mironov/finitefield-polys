@@ -4,36 +4,7 @@
 # irreducibility and (eventually) primitivity
 
 import polynomial as pol
-
-def prime_factors(n: int):
-    """
-    Returns a list of all prime factors of n.
-    Multiplicities unneeded, thus not returned.
-    """
-    if n <= 0:
-        raise ValueError("Attempted to factorize "+
-                         f"nonpositive integer {n}!")
-    if n == 1:
-        return []
-    if pol.is_prime(n):
-        return [n]
-    factors = []
-    p = 2
-    while p * p <= n:
-        # if n is divisible by p, add it to the list
-        # and divide out by it as much as possible
-        if n % p == 0:
-            factors.append(p)
-            while n % p == 0:
-                n //= p
-        # move on to the next prime
-        p += 1
-        while not pol.is_prime(p):
-            p += 1
-    if n > 1:
-        factors.append(n)
-    return factors
-        
+import auxiliaries as aux
 
 def xqpower(n: int, f):
     """
@@ -60,6 +31,66 @@ def xqpower(n: int, f):
         # worst-case space complexity is FCH * f.degree()
         result = (result ** pol.FCH) % f
     return result
+
+# this might be moved to auxiliaries
+# but so far is only used here
+def is_p_power(poly):
+    """
+    Checks whether a polynomial is a perfect p'th power,
+    where p = pol.FCH.
+
+    In any ring of characteristic p, the identity
+        (a + b) ** p == a ** p + b ** p
+    holds.
+
+    Therefore, being a perfect p'th power for a
+    polynomial means being a linear combination of
+    x^(kp), k >= 0. In other words, the only nonzero
+    coefficients should be found on powers of x
+    that are a multiple of p.
+    """
+    p = pol.FCH
+    # check coefficients
+    # if we find a nonzero coefficient on x^n
+    # where n is not a multiple of p,
+    # then poly is not a perfect p'th power
+    for i in range(len(poly.coeffs)):
+        if i % p != 0 and poly.coeffs[i] != 0:
+            return False
+    # no bad coefficients => polynomial IS a p'th power
+    return True
+
+def p_root(poly):
+    """
+    For a polynomial that is a perfect p'th power,
+    calculates its p'th root, where p = pol.FCH.
+
+    Otherwise, raises a ValueError.
+    """
+    p = pol.FCH
+    if not is_p_power(poly):
+        # construct the error message
+        # rootnum is "square", "cube", "5th", "7th", etc.
+        # powphrase is "square", "cube", "5th power",
+        # "7th power" etc.
+        # really just English-language compatibility!
+        match p:
+            case 2:
+                rootnum = "square"
+            case 3:
+                rootnum = "cube"
+            case _:
+                rootnum = str(p) + aux.ordinal_suffix(p)
+        powphrase = rootnum
+        if p > 3:
+            powphrase += "power"
+        raise ValueError(f"Cannot calculate {rootnum} root "+
+                         f"of polynomial {str(poly)} -- "+
+                         f"Not a perfect {powphrase}.")
+    # now assemble the root's coeffs
+    # by just taking every p'th coeff
+    root_cfs = poly.coeffs[0::p]
+    return pol.Poly(root_cfs)
 
 def is_irreducible(poly):
     """
@@ -123,6 +154,8 @@ def is_irreducible(poly):
     # factor, and thus f is NOT irreducible.
     gcd, _, _ = pol.ext_euclid_algo(poly, poly.deriv())
     if gcd.degree() > 0:
+        if is_p_power(gcd):
+            gcd = p_root(gcd)
         reason = f"Repeated factor: {str(gcd)}"
         return (False, reason)
 
@@ -165,3 +198,20 @@ def is_irreducible(poly):
                  f"Not a factor of x^({pol.FCH}^{n}) - x")
     reason = "Rabin's test passed"
     return (True, reason)
+
+# UNIMPLEMENTED
+def is_primitive(poly):
+    """
+    Checks whether a polynomial is primitive, as follows:
+
+    1. Determine if poly is irreducible.
+       If it isn't, return False -- only irreducibles can be primitive.
+    2. Reject primitivity for polynomials of degree <= 1:
+       they do not generate field extensions.
+    3. For each proper divisor d of (p^n - 1), where p == pol.FCH
+       and n = poly.degree(), check whether x^n % poly == 1.
+    4. If at least one of those IS 1, then the polynomial is
+       not primitive -- its root has order d rather than p^n - 1,
+       and so fails to generate GF(p^n)*.
+    """
+    pass

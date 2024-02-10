@@ -5,8 +5,9 @@
 # as well as the polynomial class
 # incl. operator definitions
 
-from math import sqrt, floor
 from enum import Flag, auto
+
+import auxiliaries as aux
 
 # field characteristic
 FCH = 7
@@ -17,7 +18,9 @@ poly_dict = {}
 class DisplayFlag(Flag):
     # true => print terms in descending order, false => ascending order
     DESCENDING = auto()
-    # not yet implemented: balanced -- coeffs in -(FCH-1)/2 .. (FCH-1)/2
+    # true => balanced -- coeffs in -(FCH-1)/2 .. (FCH-1)/2
+    # false => unbalanced -- coeffs in 0 .. FCH-1
+    # ignored in char 2
     BALANCED = auto()
     def __str__(self):
         result = ""
@@ -314,24 +317,6 @@ def constant(value: int):
     """
     return Poly([value])
 
-def is_prime(n: int):
-    """
-    Checks if its input is prime. Auxiliary.
-
-    n: int -- The number whose primality is to be checked.
-    """
-    if n == 1:
-        return False
-    if n == 2:
-        return True
-    if n % 2 == 0:
-        return False
-    limit = floor(sqrt(n)) + 1
-    # check for divisibility by odd numbers between 3 and sqrt(n)
-    for d in range(3, limit, 2):
-        if n % d == 0:
-            return False
-    return True
 
 
 def make_poly(name: str, coefficients: list):
@@ -461,7 +446,7 @@ def set_characteristic(new_char: int):
     elif new_char <= 1:
         raise ValueError(f"Invalid characteristic value {new_char} -- "+
                          "Not a natural number.")
-    elif not is_prime(new_char):
+    elif not aux.is_prime(new_char):
         raise ValueError(f"Invalid characteristic value {new_char} -- "+
                          "Not prime.")
     else:
@@ -575,9 +560,9 @@ def ext_euclid_algo(poly1, poly2):
     # the GCD won't be either
     gcd, coe1, coe2 = rems[k], coe1[k], coe2[k]
     leadcoe_inv = pow(gcd.coeffs[-1],-1,FCH)
-    for pol in [gcd, coe1, coe2]:
-        # Poly.monify() method discards the leading coeff
-        # but we need to scale coe1 and coe2 by it too
-        pol = pol.scale(leadcoe_inv)
+
+    gcd = gcd.scale(leadcoe_inv)
+    coe1 = coe1.scale(leadcoe_inv)
+    coe2 = coe2.scale(leadcoe_inv)
     
     return (gcd, coe1, coe2)
