@@ -524,14 +524,13 @@ stored polynomials! Repeat the command to confirm.""")
                 name = e.args[0]
                 print(f"Polynomial {name} not found!")
             else:
-                irred_result, reason = pprops.is_irreducible(poly)
-                if irred_result:
-                    verdict = "irreducible"
+                irred_result = pprops.is_irreducible(poly)
+                if argc == 1:
+                    print(f"Polynomial {args[1]} is "+
+                          irred_result.verdict_stmt()+".")
+                # if we're here, `reason` option has been supplied.
                 else:
-                    verdict = "NOT irreducible"
-                print(f"Polynomial {args[1]} is {verdict}.")
-                if argc >= 2 and args[2] == "reason":
-                    print("Reason:",reason)
+                    print(f"Polynomial {args[1]} is {str(irred_result)}.")
                 
         case "prim":
             if argc == 0:

@@ -82,6 +82,22 @@ def p_root(poly):
     root_cfs = poly.coeffs[0::p]
     return pol.Poly(root_cfs)
 
+class IrredResult:
+    # this class has one purpose and one purpose only:
+    # to be a return type for the is_irreducible() function
+    def __init__(self, verdict: bool, reason: str):
+        self.verdict = verdict
+        self.reason = reason
+    def __bool__(self):
+        return self.verdict
+    def verdict_stmt(self):
+        if self.verdict:
+            return "irreducible"
+        else:
+            return "NOT irreducible"
+    def __str__(self):
+        return f"{self.verdict_stmt()}.\nReason: {self.reason}"
+
 def is_irreducible(poly):
     """
     Checks polynomial `poly`, copied as `f`, for irreducibility.
@@ -113,20 +129,29 @@ def is_irreducible(poly):
     # constant => NOT irreducible
     if poly.degree() <= 0:
         reason = "Constant"
-        return (False, reason)
+        return IrredResult(False, reason)
     
     # linear => irreducible ALWAYS
     if poly.degree() == 1:
         reason = "Linear"
-        return (True, reason)
+        return IrredResult(True, reason)
     
     # check if polynomial has a root.
     # if it does, it's NOT irreducible
     # (since its degree is >= 2 if we made it this far)
+    # output ALL roots for reason
+    roots = []
+    rootflag = False
     for point in range(pol.FCH):
         if poly.peval(point) == 0:
-            reason = f"Has root {point}"
-            return (False, reason)
+            rootflag = True
+            roots.append(point)
+    if rootflag:
+        if len(roots) == 1:
+            reason = f"Has root {roots[0]}"
+        else:
+            reason = f"Has roots: " + ", ".join(roots)
+        return IrredResult(False, reason)
         
     # at this point, the polynomial's degree is >= 2
     # and it has been checked not to have any roots
@@ -139,7 +164,7 @@ def is_irreducible(poly):
         if poly.degree() == 3:
             reason = "Cubic "
         reason += "with no linear factors"
-        return (True, reason)
+        return IrredResult(True, reason)
     
     # last edge case: polynomial has repeated factors
     # tested as computing GCD with its own derivative
@@ -150,7 +175,7 @@ def is_irreducible(poly):
         if is_p_power(gcd):
             gcd = p_root(gcd)
         reason = f"Repeated factor: {str(gcd)}"
-        return (False, reason)
+        return IrredResult(False, reason)
 
     # and now time for Rabin's test!
 
@@ -176,7 +201,7 @@ def is_irreducible(poly):
             reason = ("Rabin's test failed -- "+
                       f"not coprime to x^({pol.FCH}^{ni}) - x: "+
                       f"gcd({f}, {x_q_ni}) = {gcd}")
-            return (False, reason)
+            return IrredResult(False, reason)
 
     # now f is coprime with x^(FCH^n_i) - x
     # if it DIVIDES x^(FCH^n) - x,
@@ -190,7 +215,7 @@ def is_irreducible(poly):
         reason = ("Rabin's test failed -- "+
                  f"Not a factor of x^({pol.FCH}^{n}) - x")
     reason = "Rabin's test passed"
-    return (True, reason)
+    return IrredResult(True, reason)
 
 def is_primitive(poly):
     """
