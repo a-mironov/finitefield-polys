@@ -263,3 +263,123 @@ def is_primitive(poly):
     # NOT any proper divisor of p^n - 1
     # therefore the polynomial is indeed primitive
     return True
+
+class FactorList:
+    """
+    Return type for factorization functions.
+    Consists of a list of (factor, multiplicity) pairs.
+    """
+    def __init__(self, faclist: list, leadcoe: int = 1):
+        self.faclist = faclist
+        self.leadcoe = leadcoe % pol.FCH
+        if self.leadcoe == 0:
+            raise ValueError("Cannot initialize FactorList "+
+                             "class with zero leading coefficient")
+        self.normalize()
+        
+    def normalize(self):
+        """
+        Normalizes a list of factors so that the following
+        properties are satisfied:
+        1. Each factor appears only once.
+           (i.e. Duplicates are removed.)
+        2. The multiplicity of each factor f is equal
+           to the sum of all multiplicities as listed
+           in elements of the form (f, _) in the
+           unnormalized list.
+           
+        """
+        # if the faclist has 0 or 1 elements,
+        # there are no dupes to remove
+        if len(self.faclist) <= 1:
+            return
+
+        # default sort sorts by left component then by right
+        # exactly what we need
+        oldfacs = sorted(self.faclist)
+        newfacs = []
+        
+        startidx = 0
+        stopidx = 0
+        while stopidx < len(oldfacs):
+            # loop invariant: at loop start,
+            # stopidx == startidx
+            
+            # we found a new polynomial at startidx
+            poly = oldfacs[startidx][0]
+            while stopidx < len(oldfacs) and oldfacs[stopidx][0] == poly:
+                stopidx += 1
+            # add up all the multiplicities
+            mult = sum([oldfacs[i][1] for i in range(startidx, stopidx)])
+
+            # add that to the list
+            tup = (poly, mult)
+            newfacs.append(tup)
+
+            # catch up
+            startidx = stopidx
+
+        # now we've collected all the factors
+        # we're good to go
+        self.faclist = newfacs
+        
+    def factors(self):
+        """
+        Returns the list of factors without their multiplicities.
+        Factors are the left components of tuples.
+        """
+        return list(map(lambda a: a[0], self.faclist))
+    
+    def mults(self):
+        """
+        Returns the list of multiplicities
+        in the same order as the factors() method above.
+        Factors are the left components of tuples.
+        """
+        return list(map(lambda a: a[1]), self.faclist)
+
+    def __add__(self, other):
+        """
+        Merges two FactorLists:
+        - Mutliplies the leading coefficients together.
+        - Concatenates the factor lists proper.
+        - __init__ handles normalization.
+        """
+        fl_sum_leadcoe = (self.leadcoe * other.leadcoe) % pol.FCH
+        fl_sum = FactorList(self.faclist + other.faclist,
+                            leadcoe = fl_sum_leadcoe)
+        return fl_sum
+
+# UNFINISHED
+def factorize(poly) -> FactorList:
+    """
+    Factorizes the given polynomial.
+    """
+    # edge cases out of the way first
+
+    # zero polynomial is no good
+    if poly.is_zero():
+        raise ValueError("Cannot factorize the zero polynomial!")
+
+    # record the leading coefficient once
+    # for use in returns & nothing else
+    # and copy a monic associate of poly
+    lead_coeff = poly.coeffs[-1]
+    f = poly.monify()
+    
+    # constants are just that, constants
+    # no factors at all
+    # but we record the leading (and only) coefficient)
+    if f.degree() == 0:w
+        return FactorList([], lead_coeff)
+
+    # if poly is irreducible, it has one factor: itself
+    # this also handles linears
+    if is_irreducible(f):
+        return FactorList([(f, 1)], lead_coeff)
+
+    # initialize factor list as empty
+    factors = FactorList([], lead_coeff)
+
+    ### UNFINISHED !!!!!!!!!
+    return None

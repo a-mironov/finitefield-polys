@@ -270,6 +270,57 @@ class Poly():
             powers_mod_other[i] = poly
         return lincomb(self.coeffs, powers_mod_other)
 
+    # for easier readability
+    def __floordiv__(self, other):
+        quo, _ = eucdiv(self, other)
+        return quo
+
+    # used for FactorList sorting
+    def __lt__(self, other):
+        """
+        Compares two polynomials lexicographically.
+        
+        If degrees are unequal, the lower degree is smaller.
+        Otherwise, scan down the coefficients list starting
+        from the highest-degreee coefficient until we find
+        a pair of different coefficients, then compare those.
+        If we scan all coefficients and all are equal, the polynomials
+        are equal.
+        """
+        # assumes normalized
+        
+        # unequal degree => compare degrees
+        if self.degree() != other.degree():
+            return self.degree() < other.degree()
+        
+        # now degrees are equal
+        
+        # edge cases out of the way
+
+        # if one of them is the zero polynomial,
+        # then so is the other, and 0 < 0 is False
+        if self.is_zero():
+            return False
+        
+        # if they're constants, compare their values
+        if self.degree() == 1:
+            return self.coeffs[0] < other.coeffs[0]
+        
+        # now check their coefficients in descending order
+        for i in reversed(range(len(self.coeffs))):
+            if self.coeffs[i] != other.coeffs[i]:
+                return self.coeffs[i] < other.coeffs[i]
+
+        # finally, we've scanned the coefficients on both
+        # and found no mismatches
+        # they are equal
+        return False
+
+    def __le__(self, other):
+        """
+        Non-strict comparison.
+        """
+        return self == other or self < other
     
     def peval(self, x: int):
         """
