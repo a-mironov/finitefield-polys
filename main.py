@@ -71,7 +71,8 @@ stored polynomials! Repeat the command to confirm.""")
                     except ValueError as e:
                         print(e)
                     else:
-                        print(f"Characteristic set to {new_char} successfully.")
+                        print("Characteristic set to "
+                              f"{new_char} successfully.")
                         charflag = False
                         
         case "char":
@@ -375,7 +376,8 @@ stored polynomials! Repeat the command to confirm.""")
                     name = e.args[0]
                     print(f"Polynomial {name} not found!")
                 else:
-                    print(f"Product {args[1]} * {args[2]} stored in {args[3]}.")
+                    print(f"Product {args[1]} * {args[2]}"
+                          f"stored in {args[3]}.")
             else:
                 factornames = args[1:-1]
                 resultname = args[-1]
