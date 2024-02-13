@@ -145,7 +145,7 @@ def is_irreducible(poly):
     for point in range(pol.FCH):
         if poly.peval(point) == 0:
             rootflag = True
-            roots.append(point)
+            roots.append(str(point))
     if rootflag:
         if len(roots) == 1:
             reason = f"Has root {roots[0]}"
@@ -336,7 +336,53 @@ class FactorList:
         in the same order as the factors() method above.
         Factors are the left components of tuples.
         """
-        return list(map(lambda a: a[1]), self.faclist)
+        return list(map(lambda a: a[1], self.faclist))
+
+    def append(self, poly, mult: int = 1):
+        """
+        Add (well, multiply...) a new factor into the factorization.
+        """
+        self.faclist.append((poly, mult))
+        self.normalize()
+
+    def __str__(self):
+        """
+        Human-readable representation of factorization.
+        """
+        # edge case: no factors
+        # print according to display options set in polynomial.py
+        # handled there, so i don't have to WET this
+        if len(self.faclist) == 0:
+            return str(pol.constant(self.leadcoe))
+
+        # edge case: leading coeff = 1
+        # and only one factor with multiplicity one
+        # then just print that polynomial
+        if (len(self.faclist) == 1
+            and self.leadcoe == 1
+            and self.mults()[0] == 1):
+            return str(self.factors()[0])
+
+        # again, defer to display options
+        # as to whether coefficients are
+        # 0..FCH-1 or -(FCH-1)/2..(FCH-1)/2
+        # but handle 1 and -1 leadcoes specially still.
+        fac_written = str(pol.constant(self.leadcoe))
+        if fac_written == "1":
+            fac_written = ""
+        if fac_written == "-1":
+            fac_written = "-"
+
+        terms = []
+        # each factor is gonna need parenthesization
+        for i in range(len(self.faclist)):
+            if self.mults()[i] == 1:
+                terms.append(f"({self.factors()[i]})")
+            else:
+                terms.append(f"({self.factors()[i]})^{self.mults()[i]}")
+                
+        fac_written += " * ".join(terms)
+        return fac_written
 
     def __add__(self, other):
         """
@@ -349,6 +395,20 @@ class FactorList:
         fl_sum = FactorList(self.faclist + other.faclist,
                             leadcoe = fl_sum_leadcoe)
         return fl_sum
+
+    def __mul__(self, n: int):
+        """
+        Multiplies all multiplicities in the list by n.
+        Also raises the leading coefficient to the n'th power.
+        If factorize(poly) == fl,
+        then fl * n == factorze(poly ** n).
+        """
+        prodlist = []
+        prodlcf = pow(self.leadcoe, n, pol.FCH)
+        for tup in self.faclist:
+            newtup = (tup[0], tup[1] * n)
+            prodlist.append(newtup)
+        return FactorList(prodlist, prodlcf)
 
 # UNFINISHED
 def factorize(poly) -> FactorList:
@@ -370,7 +430,7 @@ def factorize(poly) -> FactorList:
     # constants are just that, constants
     # no factors at all
     # but we record the leading (and only) coefficient)
-    if f.degree() == 0:w
+    if f.degree() == 0:
         return FactorList([], lead_coeff)
 
     # if poly is irreducible, it has one factor: itself
@@ -381,5 +441,14 @@ def factorize(poly) -> FactorList:
     # initialize factor list as empty
     factors = FactorList([], lead_coeff)
 
-    ### UNFINISHED !!!!!!!!!
-    return None
+    # extract all linear factors
+    for i in range(pol.FCH):
+        while f.peval(i) == 0:
+            lin = pol.Poly([-i, 1])
+            factors.append(lin)
+            f = f // lin
+
+    ### UNFINISHED!
+    # struggling a bit with how to implement the full thing at the moment
+    factors.append(f)
+    return factors
