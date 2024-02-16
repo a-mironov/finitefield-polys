@@ -62,7 +62,7 @@ class Poly():
             self.coeffs = [0]
         self.normalize()
 
-    def __str__(self):
+    def str_custom(self, varname: str = "x"):
         # constant => print as-is
         if len(self.coeffs) == 1:
             coefficient = self.coeffs[0]
@@ -88,9 +88,9 @@ class Poly():
                     terms.append(str(coefficient))
                 else:
                     # power x^i, printed as just x for i=1
-                    power = f"x^{i}"
+                    power = f"{varname}^{i}"
                     if i == 1:
-                        power = "x"
+                        power = varname
                     if coefficient == 1:
                         terms.append(power)
                     elif coefficient == -1:
@@ -101,6 +101,9 @@ class Poly():
             terms.reverse()
         result = " + ".join(terms).replace("+ -","- ")
         return result
+
+    def __str__(self):
+        return self.str_custom(varname = "x")
 
     def normalize(self):
         """
