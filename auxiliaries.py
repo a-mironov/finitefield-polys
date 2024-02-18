@@ -7,6 +7,18 @@
 # used only for primality checks
 from math import sqrt, floor
 
+def numphrase(word: str, number: int):
+    """
+    Returns a string consisting of the number followed
+    by the word, with the -s plural ending if needed.
+    Does NOT handle irregular plurals (man -> men).
+    """
+    # ...nor does it need to.
+    result = str(number) + " " + word
+    if number != 1:
+        result += "s"
+    return result
+
 def ordinal_suffix(n: int):
     """
     Returns the English ordinal suffix (-st, -nd, -rd, or -th)
@@ -134,7 +146,5 @@ def parse_lincomb(arguments: list):
                 raise ValueError(f"Could not parse {arguments[i]} as integer!")
         else:
             name = arguments[i]
-            if name not in polynomial.poly_dict.keys():
-                raise KeyError(name)
             polynames.append(name)
     return (weights, polynames)

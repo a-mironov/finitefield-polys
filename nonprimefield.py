@@ -7,11 +7,6 @@
 import polynomial as pol
 import pprops
 
-# dict of stored field elements
-
-fieldel_dict = {}
-
-# UNFINISHED
 class FieldEl():
     # polynomial that defines the field
     quotpoly = None
@@ -20,19 +15,22 @@ class FieldEl():
     
     def setfield(poly):
         """
-        Sets the polynomial f such that F_p[x]/(f) = GF(p^n).
+        Sets the polynomial `poly` such that F_p[x]/(poly) = GF(p^n).
         p = pol.FCH, the field characteristic.
         Prepares the exponential lookup table (actually a list).
-        Flushes all existing 
+        Flushes all stored field elements.
 
         Input `poly` must be a primitive polynomial.
         """
         if not pprops.is_primitive(poly):
-            raise ValueError("Cannot initialize finite field"
-                             f"GF({pol.FCH}^{poly.degree()} "
+            raise ValueError("Cannot initialize finite field "
+                             f"GF({pol.FCH}^{poly.degree()}) "
                              f"on polynomial {str(poly)} -- "
                              "Not primitive.")
-        FieldEl.quotpoly = poly.__copy__()
+        
+        # constant multiplier makes no difference
+        # but it's nice to have quotpoly be monic
+        FieldEl.quotpoly = poly.monify()
 
         p = pol.FCH
         n = poly.degree()
@@ -55,7 +53,7 @@ class FieldEl():
         if isinstance(inp, pol.Poly):
             self.poly = inp % FieldEl.quotpoly
         elif isinstance(inp, list):
-            self.poly = pol.Poly(inp)
+            self.poly = pol.Poly(inp) % FieldEl.quotpoly
         elif isinstance(inp, int):
             self.poly = pol.constant(inp)
             

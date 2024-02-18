@@ -1,7 +1,8 @@
 # pprops module
 
 # contains logic for testing polynomial properties
-# irreducibility and (eventually) primitivity
+# irreducibility and primitivity
+# eventually also factorization
 
 import polynomial as pol
 import auxiliaries as aux
