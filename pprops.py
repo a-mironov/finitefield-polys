@@ -245,7 +245,10 @@ def is_primitive(poly):
         return False
 
     p = pol.FCH
-    divs = aux.proper_factors(p ** n - 1)
+    fieldsize = p ** n - 1
+    # only need to check divisors of the form
+    # (p^n - 1)/prime
+    divs = [fieldsize // p_ for p_ in aux.prime_factors(fieldsize)]
 
     # edge case: if p^n - 1 is prime, primitivity is guaranteed
     # can happen if p=2, i.e. if p^n - 1 is a Mersenne prime
