@@ -115,6 +115,10 @@ while not exitflag:
             # bypass warning if 2nd arg is "CONFIRM"
             if argc >= 2 and args[2] == "CONFIRM":
                 charflag = True
+            # easter egg
+            if int(args[1]) == 57:
+                print("Nice try, Grothendieck.")
+                continue
             if not charflag:
                 print("Warning! Changing the characteristic will "
                       "delete all stored polynomials! Repeat "
@@ -282,7 +286,7 @@ while not exitflag:
                 print(e)
             else:
                 typedesc = typenames[args[1]]
-                print(f"{typedesc} {name} created.")
+                print(f"{typedesc} {args[2]} created.")
                 
         case "show":
             if argc == 0:
