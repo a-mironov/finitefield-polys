@@ -55,6 +55,7 @@ Run the `main.py` file.
 		- Fails Rabin's test -- NOT irreducible
 		- Passes Rabin's test -- irreducible
 	- `prim`: Checks if a polynomial is primitive.
+	- `coeff`: Prints a single coefficient of a polynomial. QoL.
 - Field element properties:
 	- `dlog`: Discrete logarithm to base `a`, where `a` is the generator of the field.
 	- `order`: Order in the multiplicative group of `GF(p^n)`. 

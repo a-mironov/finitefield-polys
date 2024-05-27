@@ -227,6 +227,10 @@ cmds_list["dlog"] = ("Usage: dlog <name>\n\n"
                      "of a nonzero field element `e` of GF(p^n) "
                      "is the unique exponent k between 0 and p^n - 2 "
                      "such that a^k == e.")
+cmds_list["coeff"] = ("Usage: coeff <name> <power>\n\n"
+                      "Prints a single coefficient of the specified "
+                      "polynomial. If requested power is higher than "
+                      "the degree, prints 0.")
 cmds_list["order"] = ("Usage: order <name>\n\n"
                       "Prints the order of field element `name` in "
                       "the multiplicative group of GF(p^n).\nThe "
@@ -251,7 +255,7 @@ help_pages = [["exit","help","list","setchar","char",
               ["save","load"],
               ["add","subtract","multiply","divide","power",
                "lincomb","eval","modulo","eucdiv","eea","diff"],
-              ["degree", "dlog", "order", "irred", "prim"]]
+              ["degree", "dlog", "coeff", "order", "irred", "prim"]]
 
 special_help_msg = ("Type `list` to see all commands.\n"
                     "Type `help <cmd>` to view the description of one command,"

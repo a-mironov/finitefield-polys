@@ -653,7 +653,38 @@ while not exitflag:
                           "a discrete logarithm.")
                 else:
                     print(f"log_a({str(el)}) = {el.dlog}")
-
+        case "coeff":
+            if argc < 2:
+                print("Too few arguments! No help desc yet.")
+                continue
+            try:
+                poly = dm.obj_dict[args[1]]
+                pow = int(args[2])
+                assert pow > 0
+            except AssertionError:
+                print(f"Cannot query coefficients of negative powers!")
+                continue
+            except ValueError:
+                print(f"Could not parse {args[2]} as integer!")
+                continue
+            except KeyError:
+                print(f"Polynomial {args[1]} not found!")
+                continue
+            varletter = "x"
+            if type(poly) is npf.FieldEl:
+                poly = poly.poly 
+                varletter = "a"
+                assert type(poly) is pol.Poly
+            coeff = 0
+            if pow > poly.degree():
+                coeff = 0
+            else:
+                coeff = poly.coeffs[pow]
+            if (pol.DisplayFlag.BALANCED in pol.display_cfg
+                and pol.FCH != 2
+                and coeff > (pol.FCH - 1)//2):
+                coeff -= pol.FCH
+            print(f"Coefficient of {varletter}^{pow} in {args[1]} is {coeff}.")
         case "order":
             if argc == 0:
                 print("Too few arguments!")
