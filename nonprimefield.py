@@ -35,11 +35,15 @@ class FieldEl():
         p = pol.FCH
         n = poly.degree()
 
+        fieldsize = p ** n - 2
+
         power_lookup = [pol.constant(1)]
         for i in range(1,p**n - 1):
             next_power = ( (power_lookup[-1] * pol.monomial(1,1))
                            % FieldEl.quotpoly)
             power_lookup.append(next_power.__copy__())
+            if i % 10000 == 0:
+                print(f"Computed powers up to {i} of {fieldsize}...")
 
         FieldEl.powers = power_lookup
 

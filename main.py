@@ -13,6 +13,7 @@ import nonprimefield as npf
 
 # all data management lives here
 import datamgmt as dm
+import fileio
 
 exitflag = False
 
@@ -30,53 +31,6 @@ print(welcomemsg)
 
 # for echoing creation/deletion/etc.
 typenames = {"poly": "Polynomial", "el": "Field element"}
-
-def set_characteristic(new_char: int):
-    """
-    Resets the characteristic of the base field.
-    Unless the old value matches the new, flushes all stored
-    polynomials and field elements.
-
-    new_char: int -- the new value of the characteristic
-    """
-    # if new characteristic is the same as the old, do nothing
-    if new_char == pol.FCH:
-        return
-    elif new_char <= 1:
-        raise ValueError(f"Invalid characteristic value {new_char} -- "+
-                         "Not a natural number.")
-    elif not aux.is_prime(new_char):
-        raise ValueError(f"Invalid characteristic value {new_char} -- "+
-                         "Not prime.")
-    else:
-        # new characteristic is prime and differs from old
-        pol.FCH = new_char
-        # flushing stored objects
-        dm.obj_dict.clear()
-        # resetting non-prime field
-        npf.FieldEl.quotpoly = None
-        npf.FieldEl.powers = []
-
-def set_field(new_qpoly_name: str):
-    """
-    Resets the defining polynomial of the non-prime field.
-    Flushes all current fieldels stored.
-    """
-    if new_qpoly_name not in dm.obj_dict.keys():
-        print(f"Polynomial {new_qpoly_name} not found!")
-        return
-    if type(dm.obj_dict[new_qpoly_name]) == npf.FieldEl:
-        print(f"{new_qpoly_name} must be a polynomial!")
-        return
-    try:
-        npf.FieldEl.setfield(dm.obj_dict[new_qpoly_name])
-    except ValueError as e:
-        print(e)
-    else:
-        dm.mass_delete("el")
-        print("Quotient polynomial set to "
-              f"{str(dm.obj_dict[new_qpoly_name].monify())} "
-              "successfully.")
 
 cmd = ""
 while not exitflag:
@@ -132,7 +86,7 @@ while not exitflag:
                     print(f"Could not parse {args[1]} as an integer!")
                 else:
                     try:
-                        set_characteristic(new_char)
+                        dm.set_characteristic(new_char)
                     except ValueError as e:
                         print(e)
                     else:
@@ -159,7 +113,7 @@ while not exitflag:
                       f"`setfield {args[1]} CONFIRM` to confirm "
                       "field re-initialization.")
                 continue
-            set_field(args[1])
+            dm.set_field(args[1])
 
         case "field":
             if npf.FieldEl.quotpoly is None:
@@ -238,7 +192,7 @@ while not exitflag:
                     print("Second argument must be `toggle` or absent.")
                     print(cmdinfo.cmds_list["displayopts"])
                     
-        # data management commands        
+        # internal data management commands        
         case "create":
             if argc < 2:
                 print("Too few arguments!")
@@ -417,14 +371,42 @@ while not exitflag:
             else:
                 typedesc = dm.get_type(args[2])
                 print(f"{typedesc} {args[1]} renamed to {args[2]}.")
-                
+
+        # file IO commands
+        case "save":
+            if argc < 1:
+                print("Too few arguments!")
+                print(cmdinfo.cmds_list[cmd])
+                continue
+            filename = args[1]
+            try:
+                fileio.save_workspace(filename)
+            except IOError as e:
+                print(f"Could not save workspace: {e}")
+            else:
+                print(f"Workspace saved to file \\saves\\{filename}"
+                       " successfully.")
+        
+        case "load":
+            if argc < 1:
+                print("Too few arguments!")
+                print(cmdinfo.cmds_list[cmd])
+                continue
+            filename = args[1]
+            try:
+                fileio.load_workspace(filename)
+            except (IOError, ValueError) as e:
+                print(e)
+            else:
+                print(f"Workspace loaded from file \\saves\\{filename}"
+                       " successfully.")
+
         # arithmetic commands        
         case "add":
             if argc < 3:
                 print("Too few arguments!")
                 print(cmdinfo.helpdesc(cmd))
                 continue
-
             addendnames = args[1:-1]
             resultname = args[-1]
 

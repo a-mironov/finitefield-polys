@@ -7,6 +7,7 @@
 
 import functools
 
+import auxiliaries as aux
 import polynomial as pol
 import nonprimefield as npf
 
@@ -14,6 +15,54 @@ import nonprimefield as npf
 obj_dict = {}
 
 # helpers
+
+# these are migrated from main
+def set_characteristic(new_char: int):
+    """
+    Resets the characteristic of the base field.
+    Unless the old value matches the new, flushes all stored
+    polynomials and field elements.
+
+    new_char: int -- the new value of the characteristic
+    """
+    # if new characteristic is the same as the old, do nothing
+    if new_char == pol.FCH:
+        return
+    elif new_char <= 1:
+        raise ValueError(f"Invalid characteristic value {new_char} -- "+
+                         "Not a natural number.")
+    elif not aux.is_prime(new_char):
+        raise ValueError(f"Invalid characteristic value {new_char} -- "+
+                         "Not prime.")
+    else:
+        # new characteristic is prime and differs from old
+        pol.FCH = new_char
+        # flushing stored objects
+        obj_dict.clear()
+        # resetting non-prime field
+        npf.FieldEl.quotpoly = None
+        npf.FieldEl.powers = []
+
+def set_field(new_qpoly_name: str):
+    """
+    Resets the defining polynomial of the non-prime field.
+    Flushes all current fieldels stored.
+    """
+    if new_qpoly_name not in obj_dict.keys():
+        print(f"Polynomial {new_qpoly_name} not found!")
+        return
+    if type(obj_dict[new_qpoly_name]) == npf.FieldEl:
+        print(f"{new_qpoly_name} must be a polynomial!")
+        return
+    try:
+        npf.FieldEl.setfield(obj_dict[new_qpoly_name])
+    except ValueError as e:
+        print(e)
+    else:
+        mass_delete("el")
+        print("Quotient polynomial set to "
+              f"{str(obj_dict[new_qpoly_name].monify())} "
+              "successfully.")
 
 def group_convert(names: list):
     """

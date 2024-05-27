@@ -69,8 +69,8 @@ cmds_list["displayopts"] = ("Usage: displayopts OR displayopts <option> OR "
                             "`create` and `update` commands -- these always "
                             "read coefficients in ascending order."
                             "\n\nAlias: dpo")
-cmds_list["dpo"] = ("Alias for `displayoptions`.")
-aliases["dpo"] = "displayoptions"
+cmds_list["dpo"] = ("Alias for `displayopts`.")
+aliases["dpo"] = "displayopts"
 
 # data management commands
 cmds_list["create"] = ("Usage: create <poly|el> <name> <coeffs>\n\n"
@@ -130,6 +130,17 @@ cmds_list["copy"] = ("Usage: copy <src> <dest>\n\n"
                      "if present!")
 cmds_list["rename"] = ("Usage: rename <oldname> <newname>\n\n"
                        "Renames an object from `oldname` to `newname`.")
+
+# file IO commands
+cmds_list["save"] = ("Usage: save <filename>\n\n"
+                     "Saves the current workspace to a text file. The file "
+                     "contains info about the characteristic, display options, "
+                     "quotient polynomial (if any) and all stored polynomials "
+                     "and field elements.")
+cmds_list["load"] = ("Usage: load <filename>\n\n"
+                     "Loads a workspace from a text file formatted in the "
+                     "same way as the output of `save`.")
+
 # arithmetic commands
 cmds_list["add"] = ("Usage: add <name1> <name2> [<name3> ...] <result>\n\n"
                     "Adds polynomials or field elements under all supplied names "
@@ -237,6 +248,7 @@ help_pages = [["exit","help","list","setchar","char",
                "setfield","field","displayopts"],
               ["create","show","showall","delete",
                "deleteall","update","copy","rename"],
+              ["save","load"],
               ["add","subtract","multiply","divide","power",
                "lincomb","eval","modulo","eucdiv","eea","diff"],
               ["degree", "dlog", "order", "irred", "prim"]]
@@ -247,8 +259,9 @@ special_help_msg = ("Type `list` to see all commands.\n"
                     "in one of the following groups:\n\n"
                     "1. General commands\n"
                     "2. Data management commands\n"
-                    "3. Arithmetic commands\n"
-                    "4. Property commands")
+                    "3. File I/O commands"
+                    "4. Arithmetic commands\n"
+                    "5. Property commands")
 
 def dealias(cmd: str):
     if cmd in aliases.keys():

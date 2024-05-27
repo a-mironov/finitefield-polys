@@ -1,5 +1,5 @@
 FFP
-CHAR 7
+CHAR 15
 QUOT 4 0 6 1
 DISP term-desc coeffs-bal
 POLY F 4 0 6 1

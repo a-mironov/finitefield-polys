@@ -2,6 +2,7 @@ FFP
 CHAR 7
 QUOT 4 0 6 1
 DISP term-desc coeffs-bal
+DISP junk-junk junk-junk
 POLY F 4 0 6 1
 POLY G 3 4 4 2 3 0 0 3 1 0 6 1
 EL x 4 2 3

@@ -1,0 +1,11 @@
+FFPOLY FILE FORMAT
+
+All lines begin with an all-caps token indicating their purpose. The following are the allowed tokens and their meaning:
+
+* FFP - Must introduce the first line. If this is not present, or present anywhere but the first line, the file is invalid.
+* CHAR - Indicates the characteristic. Must be followed by a number parseable as integer. A line with this token must appear _exactly once_ in the file.
+* DISP - Indicates display options. Must be followed by exactly one term-order token ("term-asc" or "term-desc") and exactly one coefficient-balancing token ("coeffs-bal" or "coeffs-unbal"). A line with this token must appear _exactly once_ in the file.
+* QUOT - Indicates the quotient polynomial. Must be followed by at least 3 coefficients parseable as integer. A line with this token must appear _at most once_ in the file.
+* POLY - Indicates a polynomial. Must be followed by a name and at least 1 coefficient parseable as integer, in that order. Lines with this token may appear any number of times, including 0.
+* EL - Indicates a field element, with the same syntax as a polynomial. If a QUOT line is present, lines with the EL token may appear any number of times, including 0; if there is no QUOT line, no EL lines may appear.
+* # - Indicates a comment. Ignored during file read.

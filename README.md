@@ -29,6 +29,9 @@ Run the `main.py` file.
 	- If field elements are displayed, the field's defining polynomial is too.
 	- Polynomials are printed with powers of `x`, and field elements are printed with powers of `a`.
 		- `a` is the image of `x` under the natural projection `F_p[x] -> GF(p^n)`.
+## File I/O
+- `save`: Save the current workspace to a text file.
+- `load`: Load a workspace from a text file. Currently overwrites existing workspace!
 ## Arithmetic
 - Universal commands:
 	- `add`, `subtract` (alias `sub`), `multiply` (alias `mul`), `power` (alias `pow`): Ring operations.
@@ -60,7 +63,7 @@ Run the `main.py` file.
 ## General
 - Name validation: forbid the use of certain names for polynomial creation
 ## Data management
-- File I/O: Save current workspace to a file, load polynomials in from a file (overwriting and additive)
+- File I/O: Additive loading
 - For multi-output commands, allow the use of `_` in lieu of an output name to discard some outputs
 - Impose restrictions on what strings can be used as polynomial names
 ## Arithmetic
